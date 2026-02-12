@@ -1,0 +1,11 @@
+# Cloudflare Worker configuration
+# Docs: https://developers.cloudflare.com/workers/wrangler/configuration/
+
+name = "strava-auth"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# Set secrets via CLI (never commit these!):
+#   npx wrangler secret put STRAVA_CLIENT_ID
+#   npx wrangler secret put STRAVA_CLIENT_SECRET
+#   npx wrangler secret put ALLOWED_ORIGIN

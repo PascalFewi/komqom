@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Segment Scout</title>
+
+<!-- Leaflet from CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --strava-orange: #FC5200;
+    --accent: #FF6B2B;
+    --bg-dark: #1A1A2E;
+    --bg-card: #16213E;
+    --bg-panel: #0F1529;
+    --text-primary: #E8E8F0;
+    --text-muted: #8888A8;
+    --text-dim: #555577;
+    --green: #2ECC71;
+    --blue: #3B82F6;
+    --yellow: #F59E0B;
+    --red: #EF4444;
+    --border: rgba(255,255,255,0.06);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ===== AUTH SCREEN ===== */
+  #auth-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: var(--bg-dark);
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(252,82,0,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(59,130,246,0.06) 0%, transparent 50%);
+  }
+
+  .auth-box {
+    width: 420px;
+    max-width: 92vw;
+    text-align: center;
+  }
+
+  .auth-logo {
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: -1.5px;
+    margin-bottom: 6px;
+    background: linear-gradient(135deg, var(--strava-orange), #FF8A50);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .auth-sub {
+    color: var(--text-muted);
+    font-size: 15px;
+    margin-bottom: 36px;
+  }
+
+  .auth-label {
+    display: block;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .auth-input {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .auth-input:focus {
+    border-color: var(--strava-orange);
+  }
+  .auth-input::placeholder {
+    color: var(--text-dim);
+  }
+
+  .auth-hint {
+    margin-top: 10px;
+    margin-bottom: 24px;
+    font-size: 12px;
+    color: var(--text-dim);
+    text-align: left;
+    line-height: 1.5;
+  }
+  .auth-hint a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .auth-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--strava-orange), var(--accent));
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s;
+  }
+  .auth-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(252,82,0,0.3);
+  }
+  .auth-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .auth-type-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .type-btn {
+    flex: 1;
+    padding: 10px;
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .type-btn.active {
+    border-color: var(--strava-orange);
+    color: var(--strava-orange);
+    background: rgba(252,82,0,0.08);
+  }
+
+  /* ===== APP LAYOUT ===== */
+  #app-screen {
+    display: none;
+    height: 100vh;
+    flex-direction: column;
+  }
+
+  /* Top bar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 52px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    z-index: 1000;
+  }
+  .topbar-title {
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.5px;
+    color: var(--accent);
+  }
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .topbar-badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(252,82,0,0.12);
+    color: var(--accent);
+  }
+  .topbar-type-toggle {
+    display: flex;
+    gap: 2px;
+    background: var(--bg-card);
+    border-radius: 8px;
+    padding: 3px;
+  }
+  .topbar-type-btn {
+    padding: 5px 14px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .topbar-type-btn.active {
+    background: var(--strava-orange);
+    color: #fff;
+  }
+  .disconnect-btn {
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .disconnect-btn:hover {
+    border-color: var(--red);
+    color: var(--red);
+  }
+
+  /* Map + Panel layout */
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  #map {
+    flex: 1;
+    min-height: 0;
+    z-index: 1;
+  }
+
+  /* Segment Panel */
+  .panel {
+    height: 260px;
+    background: var(--bg-panel);
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    transition: height 0.3s ease;
+    z-index: 500;
+  }
+  .panel.expanded {
+    height: 50vh;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .panel-header:hover {
+    background: rgba(255,255,255,0.02);
+  }
+  .panel-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .panel-count {
+    color: var(--accent);
+  }
+  .panel-toggle {
+    font-size: 18px;
+    color: var(--text-dim);
+    transition: transform 0.3s;
+  }
+  .panel.expanded .panel-toggle {
+    transform: rotate(180deg);
+  }
+
+  .panel-scroll {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 12px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  /* Segment Cards */
+  .seg-card {
+    flex-shrink: 0;
+    width: 240px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .seg-card:hover {
+    border-color: rgba(252,82,0,0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .seg-card.active {
+    border-color: var(--strava-orange);
+    box-shadow: 0 0 0 1px var(--strava-orange), 0 4px 20px rgba(252,82,0,0.15);
+  }
+
+  .seg-name {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .seg-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 12px;
+  }
+
+  .seg-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .seg-stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+  .seg-stat-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .seg-grade-bar {
+    height: 3px;
+    border-radius: 2px;
+    background: var(--border);
+    overflow: hidden;
+  }
+  .seg-grade-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+
+  .grade-flat { background: var(--green); }
+  .grade-easy { background: var(--blue); }
+  .grade-moderate { background: var(--yellow); }
+  .grade-steep { background: var(--strava-orange); }
+  .grade-hc { background: var(--red); }
+
+  /* Loading & status messages */
+  .status-msg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-dim);
+    font-size: 14px;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--text-dim);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-toast {
+    position: fixed;
+    top: 64px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--red);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 2000;
+    animation: fadeInOut 4s ease forwards;
+  }
+  @keyframes fadeInOut {
+    0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+    10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* Leaflet overrides */
+  .leaflet-control-zoom {
+    border: none !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3) !important;
+  }
+  .leaflet-control-zoom a {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border) !important;
+  }
+  .leaflet-control-zoom a:hover {
+    background: var(--bg-panel) !important;
+  }
+
+  /* Custom tooltip style */
+  .segment-tooltip {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 6px !important;
+    padding: 4px 10px !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important;
+  }
+  .segment-tooltip::before {
+    border-top-color: var(--bg-card) !important;
+  }
+
+  /* Zoom hint overlay */
+  .zoom-hint {
+    position: absolute;
+    bottom: 280px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    z-index: 500;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== AUTH SCREEN ==================== -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">Segment Scout</div>
+    <div class="auth-sub">Explore Strava segments on the map</div>
+
+    <label class="auth-label">Strava Access Token</label>
+    <input
+      type="text"
+      id="token-input"
+      class="auth-input"
+      placeholder="Paste your access token here…"
+      spellcheck="false"
+      autocomplete="off"
+    />
+    <div class="auth-hint">
+      Get your token from
+      <a href="https://www.strava.com/settings/api" target="_blank">strava.com/settings/api</a>
+      — copy the value under "Your Access Token".
+      Needs <code>read</code> scope.
+    </div>
+
+    <label class="auth-label">Activity Type</label>
+    <div class="auth-type-row">
+      <button class="type-btn active" data-type="riding" onclick="selectType(this)">🚴 Ride</button>
+      <button class="type-btn" data-type="running" onclick="selectType(this)">🏃 Run</button>
+    </div>
+
+    <button class="auth-btn" id="connect-btn" disabled onclick="connect()">Connect & Explore</button>
+  </div>
+</div>
+
+<!-- ==================== APP SCREEN ==================== -->
+<div id="app-screen">
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="topbar-title">Segment Scout</div>
+    <div class="topbar-right">
+      <div class="topbar-badge" id="segment-count">0 segments</div>
+      <div class="topbar-type-toggle">
+        <button class="topbar-type-btn active" data-type="riding" onclick="switchType(this)">Ride</button>
+        <button class="topbar-type-btn" data-type="running" onclick="switchType(this)">Run</button>
+      </div>
+      <button class="disconnect-btn" onclick="disconnect()">Logout</button>
+    </div>
+  </div>
+
+  <!-- Map + Panel -->
+  <div class="main-content">
+    <div id="map"></div>
+    <div id="zoom-hint" class="zoom-hint" style="opacity:0">Zoom in closer to load segments</div>
+
+    <div class="panel" id="panel">
+      <div class="panel-header" onclick="togglePanel()">
+        <span class="panel-title">Segments <span class="panel-count" id="panel-count"></span></span>
+        <span class="panel-toggle">▲</span>
+      </div>
+      <div class="panel-scroll" id="segment-list">
+        <div class="status-msg" id="panel-status">Move the map to explore segments</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========================================================
+// CONFIG & STATE
+// ========================================================
+let accessToken = '';
+let activityType = 'riding';  // 'riding' or 'running'
+let map = null;
+let segments = {};             // id -> { data, polyline, marker }
+let activeSegmentId = null;
+let loadTimeout = null;
+let isLoading = false;
+
+const STRAVA_API = 'https://www.strava.com/api/v3';
+const ORANGE = '#FC5200';
+const ORANGE_LIGHT = '#FF8A50';
+const BLUE = '#3B82F6';
+const MIN_ZOOM = 12;  // Strava erfordert relativ hohen Zoom für segment explore
+
+// ========================================================
+// GOOGLE ENCODED POLYLINE DECODER
+// Strava liefert Segmente als encoded polyline (Google-Format).
+// Jede Koordinate ist als Differenz zum Vorgänger codiert,
+// in 5-Bit-Chunks mit ASCII-Offset 63.
+// ========================================================
+function decodePolyline(encoded) {
+  const coords = [];
+  let index = 0, lat = 0, lng = 0;
+
+  while (index < encoded.length) {
+    // Latitude
+    let b, shift = 0, result = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    lat += (result & 1) ? ~(result >> 1) : (result >> 1);
+
+    // Longitude
+    shift = 0; result = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    lng += (result & 1) ? ~(result >> 1) : (result >> 1);
+
+    coords.push([lat / 1e5, lng / 1e5]);
+  }
+  return coords;
+}
+
+// ========================================================
+// AUTH SCREEN LOGIC
+// ========================================================
+const tokenInput = document.getElementById('token-input');
+const connectBtn = document.getElementById('connect-btn');
+
+tokenInput.addEventListener('input', () => {
+  connectBtn.disabled = tokenInput.value.trim().length < 10;
+});
+
+function selectType(btn) {
+  document.querySelectorAll('.auth-type-row .type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activityType = btn.dataset.type;
+}
+
+// Verbindung herstellen: Token speichern, Auth-Screen ausblenden, App starten
+function connect() {
+  accessToken = tokenInput.value.trim();
+  if (!accessToken) return;
+
+  document.getElementById('auth-screen').style.display = 'none';
+  const appScreen = document.getElementById('app-screen');
+  appScreen.style.display = 'flex';
+
+  // Aktivitätstyp im Topbar synchronisieren
+  document.querySelectorAll('.topbar-type-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.type === activityType);
+  });
+
+  initMap();
+}
+
+function disconnect() {
+  accessToken = '';
+  segments = {};
+  activeSegmentId = null;
+  if (map) { map.remove(); map = null; }
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  tokenInput.value = '';
+  connectBtn.disabled = true;
+}
+
+// ========================================================
+// MAP INITIALIZATION
+// Leaflet mit CARTO Voyager Dark Tiles (passt zum dunklen UI).
+// ========================================================
+function initMap() {
+  map = L.map('map', {
+    zoomControl: true,
+    attributionControl: true,
+  }).setView([47.37, 8.54], 13);  // Default: Zürich
+
+  // Dark-style tiles von CARTO
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19,
+  }).addTo(map);
+
+  // Bei jeder Kartenbewegung: Segmente nachladen (mit Debounce)
+  map.on('moveend', () => {
+    clearTimeout(loadTimeout);
+    loadTimeout = setTimeout(() => loadSegments(), 350);
+  });
+
+  // Zoom-Hint aktualisieren
+  map.on('zoomend', updateZoomHint);
+
+  // Geolocation versuchen
+  map.locate({ setView: true, maxZoom: 14 });
+  map.on('locationerror', () => {
+    // Fallback bleibt Zürich
+  });
+
+  // Initial laden
+  setTimeout(() => loadSegments(), 500);
+}
+
+function updateZoomHint() {
+  const hint = document.getElementById('zoom-hint');
+  if (map.getZoom() < MIN_ZOOM) {
+    hint.style.opacity = '1';
+  } else {
+    hint.style.opacity = '0';
+  }
+}
+
+// ========================================================
+// STRAVA API: SEGMENTS LADEN
+// Endpoint: GET /segments/explore
+// Parameter: bounds (SW_lat,SW_lng,NE_lat,NE_lng), activity_type
+// Liefert max. 10 Segmente pro Aufruf.
+// ========================================================
+async function loadSegments() {
+  if (!map || !accessToken) return;
+  if (map.getZoom() < MIN_ZOOM) {
+    updateZoomHint();
+    return;
+  }
+
+  const bounds = map.getBounds();
+  const boundsStr = [
+    bounds.getSouth().toFixed(6),
+    bounds.getWest().toFixed(6),
+    bounds.getNorth().toFixed(6),
+    bounds.getEast().toFixed(6),
+  ].join(',');
+
+  isLoading = true;
+  updatePanelStatus();
+
+  try {
+    const url = `${STRAVA_API}/segments/explore?bounds=${boundsStr}&activity_type=${activityType}`;
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+
+    if (res.status === 401) {
+      showError('Token ungültig oder abgelaufen. Bitte neu verbinden.');
+      disconnect();
+      return;
+    }
+    if (res.status === 429) {
+      showError('Strava API Rate Limit erreicht. Bitte ein paar Minuten warten.');
+      return;
+    }
+    if (!res.ok) {
+      showError(`Strava API Fehler: ${res.status}`);
+      return;
+    }
+
+    const data = await res.json();
+    const newSegments = data.segments || [];
+
+    // Neue Segmente auf der Karte zeichnen
+    for (const seg of newSegments) {
+      if (!segments[seg.id]) {
+        addSegmentToMap(seg);
+        // Optional: Detail-Daten nachladen (für KOM-Zeiten etc.)
+        fetchSegmentDetails(seg.id);
+      }
+    }
+
+    updateUI();
+  } catch (err) {
+    console.error('Fetch error:', err);
+    showError('Netzwerkfehler – ggf. CORS-Problem. Versuche die Datei lokal mit einem Server zu öffnen.');
+  } finally {
+    isLoading = false;
+    updatePanelStatus();
+  }
+}
+
+// ========================================================
+// STRAVA API: SEGMENT DETAILS
+// Endpoint: GET /segments/{id}
+// Liefert distance, xoms (KOM/QOM-Zeiten), elevation etc.
+// ========================================================
+async function fetchSegmentDetails(segmentId) {
+  try {
+    const res = await fetch(`${STRAVA_API}/segments/${segmentId}`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    if (!res.ok) return;
+    const details = await res.json();
+
+    if (segments[segmentId]) {
+      segments[segmentId].details = details;
+      updateUI();
+    }
+  } catch (err) {
+    // Silently fail – Details sind optional
+  }
+}
+
+// ========================================================
+// SEGMENT AUF KARTE ZEICHNEN
+// Jedes Segment wird als Polyline (Linie, keine Fläche)
+// gezeichnet, da es eine Strecke/Route repräsentiert.
+// Zusätzlich: CircleMarker am Start mit Tooltip.
+// ========================================================
+function addSegmentToMap(seg) {
+  const coords = decodePolyline(seg.points);
+
+  // Polyline = die Segment-Strecke
+  const polyline = L.polyline(coords, {
+    color: ORANGE,
+    weight: 3,
+    opacity: 0.8,
+    interactive: true,
+  }).addTo(map);
+
+  // Start-Marker
+  const marker = L.circleMarker(seg.start_latlng, {
+    radius: 5,
+    fillColor: ORANGE,
+    fillOpacity: 1,
+    stroke: true,
+    color: '#fff',
+    weight: 1.5,
+  }).addTo(map);
+
+  // Tooltip am Marker
+  marker.bindTooltip(seg.name, {
+    className: 'segment-tooltip',
+    direction: 'top',
+    offset: [0, -8],
+  });
+
+  // Klick auf Polyline oder Marker → Segment highlighten
+  const onSelect = () => highlightSegment(seg.id);
+  polyline.on('click', onSelect);
+  marker.on('click', onSelect);
+
+  segments[seg.id] = {
+    data: seg,
+    details: null,
+    polyline,
+    marker,
+    coords,
+  };
+}
+
+// ========================================================
+// SEGMENT HIGHLIGHTING
+// Aktives Segment wird blau und dicker dargestellt,
+// alle anderen werden zurückgesetzt.
+// ========================================================
+function highlightSegment(id) {
+  // Reset previous
+  if (activeSegmentId && segments[activeSegmentId]) {
+    const prev = segments[activeSegmentId];
+    prev.polyline.setStyle({ color: ORANGE, weight: 3, opacity: 0.8 });
+    prev.marker.setStyle({ fillColor: ORANGE });
+    prev.marker.setRadius(5);
+  }
+
+  activeSegmentId = id;
+  const seg = segments[id];
+  if (!seg) return;
+
+  seg.polyline.setStyle({ color: BLUE, weight: 5, opacity: 1 });
+  seg.polyline.bringToFront();
+  seg.marker.setStyle({ fillColor: BLUE });
+  seg.marker.setRadius(7);
+  seg.marker.bringToFront();
+
+  // Karte auf Segment zentrieren
+  map.fitBounds(seg.polyline.getBounds(), { padding: [60, 60], maxZoom: map.getZoom() });
+
+  // Card im Panel highlighten und reinscollen
+  updateUI();
+  const card = document.getElementById(`seg-${id}`);
+  if (card) {
+    card.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }
+}
+
+// ========================================================
+// UI UPDATE: SEGMENT-KARTEN + COUNTER
+// ========================================================
+function updateUI() {
+  const list = document.getElementById('segment-list');
+  const countBadge = document.getElementById('segment-count');
+  const panelCount = document.getElementById('panel-count');
+
+  // Nur Segmente im aktuellen Viewport anzeigen
+  const bounds = map.getBounds();
+  const visible = Object.entries(segments).filter(([_, s]) => {
+    return bounds.contains(s.data.start_latlng);
+  });
+
+  // Nach Steigung sortieren (flachste zuerst)
+  visible.sort((a, b) => Math.abs(a[1].data.avg_grade) - Math.abs(b[1].data.avg_grade));
+
+  const totalCount = Object.keys(segments).length;
+  countBadge.textContent = `${totalCount} segment${totalCount !== 1 ? 's' : ''}`;
+  panelCount.textContent = visible.length > 0 ? `(${visible.length} sichtbar)` : '';
+
+  if (visible.length === 0) {
+    list.innerHTML = '<div class="status-msg">Keine Segmente im Sichtbereich. Karte bewegen oder reinzoomen.</div>';
+    return;
+  }
+
+  list.innerHTML = visible.map(([id, s]) => {
+    const seg = s.data;
+    const det = s.details;
+    const isActive = parseInt(id) === activeSegmentId;
+
+    // Distanz: aus Details oder aus explore-Response
+    const dist = det ? det.distance : seg.distance;
+    const distStr = dist ? (dist >= 1000 ? (dist / 1000).toFixed(1) + ' km' : Math.round(dist) + ' m') : '—';
+
+    // Steigung
+    const grade = seg.avg_grade != null ? seg.avg_grade.toFixed(1) + '%' : '—';
+    const gradeClass = getGradeClass(seg.avg_grade);
+    const gradeWidth = Math.min(Math.abs(seg.avg_grade || 0) / 15 * 100, 100);
+
+    // Höhendifferenz
+    const elev = seg.elev_difference != null ? Math.round(seg.elev_difference) + ' m' : (det ? Math.round(det.total_elevation_gain) + ' m' : '—');
+
+    // Bestzeit (KOM)
+    const kom = det?.xoms?.kom || '—';
+
+    return `
+      <div class="seg-card ${isActive ? 'active' : ''}" id="seg-${id}" onclick="highlightSegment(${id})">
+        <div class="seg-name" title="${seg.name}">${seg.name}</div>
+        <div class="seg-grade-bar">
+          <div class="seg-grade-fill ${gradeClass}" style="width:${gradeWidth}%"></div>
+        </div>
+        <div class="seg-stats">
+          <div class="seg-stat">
+            <span class="seg-stat-label">Länge</span>
+            <span class="seg-stat-value">${distStr}</span>
+          </div>
+          <div class="seg-stat">
+            <span class="seg-stat-label">Steigung</span>
+            <span class="seg-stat-value">${grade}</span>
+          </div>
+          <div class="seg-stat">
+            <span class="seg-stat-label">Höhe</span>
+            <span class="seg-stat-value">${elev}</span>
+          </div>
+          <div class="seg-stat">
+            <span class="seg-stat-label">KOM</span>
+            <span class="seg-stat-value">${kom}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Steigungs-Klasse für die Farbkodierung
+function getGradeClass(grade) {
+  const g = Math.abs(grade || 0);
+  if (g < 2) return 'grade-flat';
+  if (g < 5) return 'grade-easy';
+  if (g < 8) return 'grade-moderate';
+  if (g < 12) return 'grade-steep';
+  return 'grade-hc';
+}
+
+function updatePanelStatus() {
+  const status = document.getElementById('panel-status');
+  if (!status) return;
+  if (isLoading) {
+    status.innerHTML = '<span class="loading-spinner"></span> Segmente laden…';
+  }
+}
+
+// ========================================================
+// PANEL TOGGLE (ausklappen/einklappen)
+// ========================================================
+function togglePanel() {
+  document.getElementById('panel').classList.toggle('expanded');
+  // Nach Resize muss Leaflet die Kartengröße neu berechnen
+  setTimeout(() => map && map.invalidateSize(), 350);
+}
+
+// ========================================================
+// ACTIVITY TYPE SWITCH
+// ========================================================
+function switchType(btn) {
+  document.querySelectorAll('.topbar-type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activityType = btn.dataset.type;
+
+  // Alle bestehenden Segmente von der Karte entfernen
+  for (const s of Object.values(segments)) {
+    s.polyline.remove();
+    s.marker.remove();
+  }
+  segments = {};
+  activeSegmentId = null;
+
+  // Neu laden
+  loadSegments();
+}
+
+// ========================================================
+// ERROR TOASTS
+// ========================================================
+function showError(msg) {
+  const toast = document.createElement('div');
+  toast.className = 'error-toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 4200);
+}
+
+// ========================================================
+// KEYBOARD: Escape zum Deselektieren
+// ========================================================
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && activeSegmentId) {
+    const seg = segments[activeSegmentId];
+    if (seg) {
+      seg.polyline.setStyle({ color: ORANGE, weight: 3, opacity: 0.8 });
+      seg.marker.setStyle({ fillColor: ORANGE });
+      seg.marker.setRadius(5);
+    }
+    activeSegmentId = null;
+    updateUI();
+  }
+});
+</script>
+
+</body>
+</html>
