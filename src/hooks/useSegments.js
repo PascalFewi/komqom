@@ -1,20 +1,15 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { exploreSegments, getSegmentById } from '../lib/strava.js';
 
 /**
  * Manages segment state: loading from API, storing, selecting.
  *
- * Segments are keyed by ID in a Map-like object.
- * Each entry has: { data (from explore), details (from getSegmentById) }
+ * Segments are keyed by ID in an object: { [id]: { data, details } }
+ * - data: from the explore endpoint (polyline, name, etc.)
+ * - details: from getSegmentById (KOM, efforts, etc.) — null until loaded
  *
- * The hook exposes:
- * - segments: object of all loaded segments
- * - activeId: currently selected segment
- * - loading: whether a fetch is in progress
- * - error: last error message
- * - loadForBounds(): trigger loading for map bounds
- * - setActiveId(): select a segment
- * - clearAll(): remove all segments (e.g. on activity type switch)
+ * Uses a 2×2 grid subdivision of the map bounds to fetch up to 40 segments
+ * (Strava explore returns max 10 per call).
  */
 export function useSegments(token) {
   const [segments, setSegments] = useState({});
@@ -22,39 +17,84 @@ export function useSegments(token) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Ref to track which segment IDs we've already fetched details for,
-  // so we don't re-fetch during rapid map moves
   const detailsFetched = useRef(new Set());
+
+  const tokenRef = useRef(token);
+  useEffect(() => {
+    tokenRef.current = token;
+  }, [token]);
 
   const loadForBounds = useCallback(
     async (bounds, activityType) => {
-      if (!token) return;
+      if (!tokenRef.current) return;
 
       setLoading(true);
       setError(null);
 
       try {
-        const newSegments = await exploreSegments(token, { bounds, activityType });
+        // Split bounds into 2×2 grid and fetch all 4 quadrants in parallel
+        const quadrants = splitBounds(bounds);
+        const results = await Promise.all(
+          quadrants.map((qBounds) =>
+            exploreSegments(tokenRef.current, { bounds: qBounds, activityType })
+              .catch((err) => {
+                // If one quadrant fails (e.g. rate limit), don't kill the others
+                console.warn('Quadrant fetch failed:', err);
+                return [];
+              })
+          )
+        );
 
-        setSegments((prev) => {
-          const updated = { ...prev };
-          let hasNew = false;
-
-          for (const seg of newSegments) {
-            if (!updated[seg.id]) {
-              updated[seg.id] = { data: seg, details: null };
-              hasNew = true;
-
-              // Fire-and-forget: load details for new segments
-              if (!detailsFetched.current.has(seg.id)) {
-                detailsFetched.current.add(seg.id);
-                loadDetails(seg.id, updated);
-              }
+        // Flatten and deduplicate by ID (quadrants may overlap at edges)
+        const seen = new Set();
+        const explored = [];
+        for (const batch of results) {
+          for (const seg of batch) {
+            if (!seen.has(seg.id)) {
+              seen.add(seg.id);
+              explored.push(seg);
             }
           }
+        }
 
-          return hasNew ? updated : prev;
+        // 1) Figure out which segments are new
+        const newSegments = [];
+        for (const seg of explored) {
+          if (!detailsFetched.current.has(seg.id)) {
+            newSegments.push(seg);
+            detailsFetched.current.add(seg.id);
+          }
+        }
+
+        // 2) Add shells to state
+        setSegments((prev) => {
+          let updated = prev;
+          for (const seg of explored) {
+            if (!updated[seg.id]) {
+              if (updated === prev) updated = { ...prev };
+              updated[seg.id] = { data: seg, details: null };
+            }
+          }
+          return updated;
         });
+
+        // 3) Fire detail fetches for new segments
+        for (const seg of newSegments) {
+          getSegmentById(tokenRef.current, seg.id)
+            .then((details) => {
+              setSegments((prev) => {
+                if (!prev[seg.id]) return prev;
+                return {
+                  ...prev,
+                  [seg.id]: { ...prev[seg.id], details },
+                };
+              });
+            })
+            .catch((err) => {
+              detailsFetched.current.delete(seg.id);
+              console.warn(`Detail fetch failed for segment ${seg.id}:`, err);
+            });
+        }
       } catch (err) {
         if (err.status === 401) {
           setError('Token abgelaufen. Bitte neu verbinden.');
@@ -71,22 +111,6 @@ export function useSegments(token) {
     [token]
   );
 
-  async function loadDetails(segmentId) {
-    try {
-      const details = await getSegmentById(token, segmentId);
-      setSegments((prev) => {
-        if (!prev[segmentId]) return prev;
-        return {
-          ...prev,
-          [segmentId]: { ...prev[segmentId], details },
-        };
-      });
-    } catch (err) {
-      // Details are optional — fail silently
-      console.warn(`Failed to load details for segment ${segmentId}`);
-    }
-  }
-
   const clearAll = useCallback(() => {
     setSegments({});
     setActiveId(null);
@@ -102,4 +126,29 @@ export function useSegments(token) {
     loadForBounds,
     clearAll,
   };
+}
+
+/**
+ * Split a bounds array into a 2×2 grid of sub-bounds.
+ *
+ * Input:  [swLat, swLng, neLat, neLng]
+ * Output: array of 4 bounds in the same format
+ *
+ *   ┌────────┬────────┐
+ *   │  NW    │  NE    │
+ *   ├────────┼────────┤
+ *   │  SW    │  SE    │
+ *   └────────┴────────┘
+ */
+function splitBounds(bounds) {
+  const [swLat, swLng, neLat, neLng] = bounds;
+  const midLat = (swLat + neLat) / 2;
+  const midLng = (swLng + neLng) / 2;
+
+  return [
+    [swLat, swLng, midLat, midLng],   // SW quadrant
+    [swLat, midLng, midLat, neLng],   // SE quadrant
+    [midLat, swLng, neLat, midLng],   // NW quadrant
+    [midLat, midLng, neLat, neLng],   // NE quadrant
+  ];
 }

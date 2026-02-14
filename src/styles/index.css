@@ -405,25 +405,166 @@ body {
   color: var(--text-primary);
 }
 
-/* Grade bar */
-.seg-grade-bar {
-  height: 3px;
-  border-radius: 2px;
-  background: var(--border);
-  overflow: hidden;
+/* ── Segment Card Header (name + star) ───────── */
+
+.seg-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.seg-grade-fill {
+.seg-card-header .seg-name {
+  min-width: 0;
+}
+
+/* ── Star ────────────────────────────────────── */
+
+.seg-star {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.seg-star-icon {
+  fill: none;
+  stroke: var(--text-dim);
+  stroke-width: 1.5;
+  transition: fill 0.15s, stroke 0.15s;
+}
+
+.seg-star-icon.starred {
+  fill: var(--yellow);
+  stroke: var(--yellow);
+}
+
+.seg-star:hover .seg-star-icon:not(.starred) {
+  stroke: var(--yellow);
+}
+
+.seg-star-count {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* ── Elevation Profile ───────────────────────── */
+
+.seg-grade-profile {
+  width: 100%;
   height: 100%;
-  border-radius: 2px;
-  transition: width 0.3s;
+  overflow: hidden;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0);
 }
 
-.grade-flat { background: var(--green); }
-.grade-easy { background: var(--blue); }
-.grade-moderate { background: var(--yellow); }
-.grade-steep { background: var(--strava-orange); }
-.grade-hc { background: var(--red); }
+.seg-grade-profile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+
+}
+
+/* ── Strava Link ─────────────────────────────── */
+
+.seg-strava-link {
+  /* add these to reset button defaults */
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  width: 100%;
+  /* existing styles remain */
+}
+
+.seg-strava-link:hover {
+  color: var(--accent);
+}
+
+
+/* ── Segment Difficulty ───────────────────────── */
+
+.seg-difficulty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  margin-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.seg-difficulty-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.seg-difficulty-score {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.seg-difficulty-label {
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-size: 10px;
+}
+
+.seg-difficulty-power {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* Difficulty levels — background colors */
+.seg-difficulty-badge.easy {
+  background: rgba(46, 204, 113, 0.15);
+  color: var(--green);
+}
+
+.seg-difficulty-badge.accessible {
+  background: rgba(46, 204, 113, 0.12);
+  color: #27ae60;
+}
+
+.seg-difficulty-badge.moderate {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--yellow);
+}
+
+.seg-difficulty-badge.hard {
+  background: rgba(252, 82, 0, 0.12);
+  color: var(--accent);
+}
+
+.seg-difficulty-badge.very-hard {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--red);
+}
+
+.seg-difficulty-badge.extreme {
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+}
+
+.seg-difficulty-badge.suspicious {
+  background: rgba(136, 136, 168, 0.12);
+  color: var(--text-muted);
+}
+
+.seg-difficulty-badge.unknown {
+  background: rgba(85, 85, 119, 0.12);
+  color: var(--text-dim);
+}
 
 /* ── Status & Loading ─────────────────────────── */
 

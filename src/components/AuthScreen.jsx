@@ -8,7 +8,7 @@ export default function AuthScreen({ onLogin, loading, error }) {
   return (
     <div className="auth-screen">
       <div className="auth-box">
-        <div className="auth-logo">Segment Scout</div>
+        <div className="auth-logo">KOM QOM</div>
         <div className="auth-sub">Explore Strava segments on the map</div>
 
         {error && <div className="auth-error">{error}</div>}

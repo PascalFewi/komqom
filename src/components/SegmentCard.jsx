@@ -5,11 +5,13 @@ import React from 'react';
  *
  * Props:
  * - segment: { data, details }
+ * - difficulty: { komPower, komPowerWKg, difficultyScore, difficultyClass, isValid }
  * - isActive: boolean
  * - onClick: () => void
  */
-export default function SegmentCard({ segment, isActive, onClick }) {
+export default function SegmentCard({ segment, difficulty, isActive, onClick }) {
   const { data, details } = segment;
+  const { komPower, difficultyScore, difficultyClass, isValid } = difficulty;
 
   // Distance: prefer details (more accurate), fallback to explore data
   const dist = details?.distance || data.distance;
@@ -17,8 +19,6 @@ export default function SegmentCard({ segment, isActive, onClick }) {
 
   // Grade
   const grade = data.avg_grade != null ? `${data.avg_grade.toFixed(1)}%` : '—';
-  const gradeClass = getGradeClass(data.avg_grade);
-  const gradeWidth = Math.min(Math.abs(data.avg_grade || 0) / 15 * 100, 100);
 
   // Elevation
   const elev =
@@ -31,21 +31,46 @@ export default function SegmentCard({ segment, isActive, onClick }) {
   // KOM time (from segment details xoms)
   const kom = details?.xoms?.kom || '—';
 
+  // Elevation profile SVG
+  const elevProfile = data.elevation_profile;
+
+  // Star info
+  const starred = details?.starred ?? false;
+  const starCount = details?.star_count ?? '';
+
+  // Strava link — convert deep-link to browser URL
+  const stravaHref = details?.xoms?.destination?.href?.replace(
+    'strava://',
+    'https://www.strava.com/'
+  );
+
   return (
     <div
       className={`seg-card ${isActive ? 'active' : ''}`}
       onClick={onClick}
     >
-      <div className="seg-name" title={data.name}>
-        {data.name}
+      <div className="seg-card-header">
+        <div className="seg-name" title={data.name}>
+          {data.name}
+        </div>
+        <div className="seg-star" onClick={(e) => e.stopPropagation()}>
+          <svg
+            className={`seg-star-icon ${starred ? 'starred' : ''}`}
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+          >
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
+          <span className="seg-star-count">{starCount}</span>
+        </div>
       </div>
 
-      <div className="seg-grade-bar">
-        <div
-          className={`seg-grade-fill ${gradeClass}`}
-          style={{ width: `${gradeWidth}%` }}
-        />
-      </div>
+      {elevProfile && (
+        <div className="seg-grade-profile">
+          <img src={elevProfile} alt="Elevation profile" height="25" />
+        </div>
+      )}
 
       <div className="seg-stats">
         <Stat label="Länge" value={distStr} />
@@ -53,6 +78,37 @@ export default function SegmentCard({ segment, isActive, onClick }) {
         <Stat label="Höhe" value={elev} />
         <Stat label="KOM" value={kom} />
       </div>
+
+      {isValid && (
+        <div className="seg-difficulty">
+          <div
+            className={`seg-difficulty-badge ${difficultyClass.class}`}
+            style={{ backgroundColor: difficultyClass.color }}
+          >
+            <span className="seg-difficulty-score">
+              {Math.round(difficultyScore)}
+            </span>
+            <span className="seg-difficulty-label">
+              {difficultyClass.label}
+            </span>
+          </div>
+          <div className="seg-difficulty-power">
+            {komPower.toFixed(0)} W &#x26A1;
+          </div>
+        </div>
+      )}
+
+      {stravaHref && (
+        <a
+          className="seg-strava-link"
+          href={stravaHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+        >
+          Auf Strava anzeigen →
+        </a>
+      )}
     </div>
   );
 }
@@ -70,13 +126,4 @@ function formatDistance(meters) {
   if (meters == null) return '—';
   if (meters >= 1000) return `${(meters / 1000).toFixed(1)} km`;
   return `${Math.round(meters)} m`;
-}
-
-function getGradeClass(grade) {
-  const g = Math.abs(grade || 0);
-  if (g < 2) return 'grade-flat';
-  if (g < 5) return 'grade-easy';
-  if (g < 8) return 'grade-moderate';
-  if (g < 12) return 'grade-steep';
-  return 'grade-hc';
 }

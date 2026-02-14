@@ -15,7 +15,7 @@ export default function TopBar({
 }) {
   return (
     <div className="topbar">
-      <div className="topbar-title">Segment Scout</div>
+      <div className="topbar-title">KOM QOM</div>
 
       <div className="topbar-right">
         <span className="topbar-badge">
