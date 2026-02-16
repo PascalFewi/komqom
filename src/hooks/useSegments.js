@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { exploreSegments, getSegmentById } from '../lib/strava.js';
+import { getCachedDetails, setCachedDetails } from '../lib/segmentCache.js';
 
 /**
  * Manages segment state: loading from API, storing, selecting.
@@ -8,8 +9,8 @@ import { exploreSegments, getSegmentById } from '../lib/strava.js';
  * - data: from the explore endpoint (polyline, name, etc.)
  * - details: from getSegmentById (KOM, efforts, etc.) — null until loaded
  *
- * Uses a 2×2 grid subdivision of the map bounds to fetch up to 40 segments
- * (Strava explore returns max 10 per call).
+ * Uses a 2×2 grid subdivision of the map bounds to fetch up to 40 segments.
+ * Caches segment details in localStorage (30-day TTL) to reduce API calls.
  */
 export function useSegments(token) {
   const [segments, setSegments] = useState({});
@@ -37,15 +38,11 @@ export function useSegments(token) {
         const results = await Promise.all(
           quadrants.map((qBounds) =>
             exploreSegments(tokenRef.current, { bounds: qBounds, activityType })
-              .catch((err) => {
-                // If one quadrant fails (e.g. rate limit), don't kill the others
-                console.warn('Quadrant fetch failed:', err);
-                return [];
-              })
+              
           )
         );
 
-        // Flatten and deduplicate by ID (quadrants may overlap at edges)
+        // Flatten and deduplicate by ID
         const seen = new Set();
         const explored = [];
         for (const batch of results) {
@@ -57,31 +54,51 @@ export function useSegments(token) {
           }
         }
 
-        // 1) Figure out which segments are new
-        const newSegments = [];
+        // Separate into: cached (have details), needs fetch (no cache)
+        const needFetch = [];
+        const cachedSegments = [];
+
         for (const seg of explored) {
-          if (!detailsFetched.current.has(seg.id)) {
-            newSegments.push(seg);
-            detailsFetched.current.add(seg.id);
+          if (detailsFetched.current.has(seg.id)) continue; // already handled
+          detailsFetched.current.add(seg.id);
+
+          const cached = getCachedDetails(seg.id);
+          if (cached) {
+            cachedSegments.push({ id: seg.id, data: seg, details: cached });
+          } else {
+            needFetch.push(seg);
           }
         }
 
-        // 2) Add shells to state
+        // Add all shells + cached details to state
         setSegments((prev) => {
           let updated = prev;
+
           for (const seg of explored) {
             if (!updated[seg.id]) {
               if (updated === prev) updated = { ...prev };
               updated[seg.id] = { data: seg, details: null };
             }
           }
+
+          // Merge cached details immediately
+          for (const { id, details } of cachedSegments) {
+            if (updated[id]) {
+              if (updated === prev) updated = { ...prev };
+              updated[id] = { ...updated[id], details };
+            }
+          }
+
           return updated;
         });
 
-        // 3) Fire detail fetches for new segments
-        for (const seg of newSegments) {
+        // Fire API fetches only for segments not in cache
+        for (const seg of needFetch) {
           getSegmentById(tokenRef.current, seg.id)
             .then((details) => {
+              // Store in cache for next session
+              setCachedDetails(seg.id, details);
+
               setSegments((prev) => {
                 if (!prev[seg.id]) return prev;
                 return {
@@ -133,12 +150,6 @@ export function useSegments(token) {
  *
  * Input:  [swLat, swLng, neLat, neLng]
  * Output: array of 4 bounds in the same format
- *
- *   ┌────────┬────────┐
- *   │  NW    │  NE    │
- *   ├────────┼────────┤
- *   │  SW    │  SE    │
- *   └────────┴────────┘
  */
 function splitBounds(bounds) {
   const [swLat, swLng, neLat, neLng] = bounds;
@@ -146,9 +157,9 @@ function splitBounds(bounds) {
   const midLng = (swLng + neLng) / 2;
 
   return [
-    [swLat, swLng, midLat, midLng],   // SW quadrant
-    [swLat, midLng, midLat, neLng],   // SE quadrant
-    [midLat, swLng, neLat, midLng],   // NW quadrant
-    [midLat, midLng, neLat, neLng],   // NE quadrant
+    [swLat, swLng, midLat, midLng],
+    [swLat, midLng, midLat, neLng],
+    [midLat, swLng, neLat, midLng],
+    [midLat, midLng, neLat, neLng],
   ];
 }

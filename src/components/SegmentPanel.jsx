@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import SegmentCard from './SegmentCard.jsx';
-import { getSegmentDifficulty } from '../utils/segmentDifficulty.js';
+import { getSegmentDifficulty } from '../lib/segmentDifficulty.js';
 
 /**
  * Bottom panel showing segment cards in a horizontal scroll.
