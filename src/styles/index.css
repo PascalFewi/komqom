@@ -126,6 +126,29 @@ body {
   font-size: 11px;
 }
 
+.strava-connect-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s, opacity 0.2s;
+}
+
+.strava-connect-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
+}
+
+.auth-loading {
+  color: var(--text-muted);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 0;
+}
+
 /* ── App Layout ───────────────────────────────── */
 
 .app-screen {

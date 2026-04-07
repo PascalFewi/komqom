@@ -2,7 +2,7 @@ import React from 'react';
 
 /**
  * Full-screen login view.
- * Shows "Connect with Strava" button that triggers the OAuth redirect.
+ * Uses the official Strava "Connect with Strava" button asset.
  */
 export default function AuthScreen({ onLogin, loading, error }) {
   return (
@@ -13,21 +13,23 @@ export default function AuthScreen({ onLogin, loading, error }) {
 
         {error && <div className="auth-error">{error}</div>}
 
-        <button
-          className="auth-btn strava-btn"
-          onClick={onLogin}
-          disabled={loading}
-        >
-          {loading ? (
-            <>
-              <span className="loading-spinner" /> Connecting…
-            </>
-          ) : (
-            <>
-              <StravaIcon /> Connect with Strava
-            </>
-          )}
-        </button>
+        {loading ? (
+          <div className="auth-loading">
+            <span className="loading-spinner" /> Connecting…
+          </div>
+        ) : (
+          <button
+            className="strava-connect-btn"
+            onClick={onLogin}
+            aria-label="Connect with Strava"
+          >
+            <img
+              src="/btn_strava_connect_with_orange.svg"
+              alt="Connect with Strava"
+              height="48"
+            />
+          </button>
+        )}
 
         <p className="auth-hint">
           We only request <code>read</code> access to explore public segments.
@@ -35,13 +37,5 @@ export default function AuthScreen({ onLogin, loading, error }) {
         </p>
       </div>
     </div>
-  );
-}
-
-function StravaIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: 8 }}>
-      <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.599h4.172L10.463 0l-7 13.828h4.169" />
-    </svg>
   );
 }

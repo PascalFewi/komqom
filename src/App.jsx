@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useAuth } from './hooks/useAuth.js';
 import { useSegments } from './hooks/useSegments.js';
 import AuthScreen from './components/AuthScreen.jsx';
@@ -8,15 +8,16 @@ import SegmentPanel from './components/SegmentPanel.jsx';
 import { LS_ACTIVITY_TYPE } from './lib/constants.js';
 
 export default function App() {
-  const { token, loading: authLoading, error: authError, login, logout, isAuthenticated } = useAuth();
-  const { segments, activeId, setActiveId, loading, error, loadForBounds, clearAll } = useSegments(token);
+  const { getValidToken, loading: authLoading, error: authError, login, logout, isAuthenticated } = useAuth();
+
+  // Pass getValidToken (not raw token) — useSegments calls it before every API request
+  const { segments, activeId, setActiveId, loading, error, loadForBounds, clearAll } = useSegments(getValidToken);
 
   const [activityType, setActivityType] = useState(
     () => localStorage.getItem(LS_ACTIVITY_TYPE) || 'riding'
   );
   const [mapBounds, setMapBounds] = useState(null);
 
-  // Handle map move → load segments for new bounds
   const handleBoundsChange = useCallback(
     (bounds) => {
       setMapBounds(bounds);
@@ -25,26 +26,22 @@ export default function App() {
     [loadForBounds, activityType]
   );
 
-  // Switch activity type: clear segments, reload
   const handleTypeChange = useCallback(
     (type) => {
       setActivityType(type);
       localStorage.setItem(LS_ACTIVITY_TYPE, type);
       clearAll();
       if (mapBounds) {
-        // Small delay to let state settle
         setTimeout(() => loadForBounds(mapBounds, type), 100);
       }
     },
     [clearAll, loadForBounds, mapBounds]
   );
 
-  // ── Not authenticated → show login ─────────────────────────────
   if (!isAuthenticated) {
     return <AuthScreen onLogin={login} loading={authLoading} error={authError} />;
   }
 
-  // ── Authenticated → show map + segments ────────────────────────
   const segmentCount = Object.keys(segments).length;
 
   return (

@@ -11,17 +11,17 @@ Explore Strava segments on an interactive map. Find segments by panning/zooming,
 │  1. User clicks "Connect with Strava"           │
 │  2. Redirect to Strava OAuth                    │
 │  3. Strava redirects back with ?code=           │
-│  4. Frontend sends code to Worker               │──── POST /exchange ──▶ ┌──────────────────┐
+│  4. Frontend sends code to Worker               │──── POST /exchange ──▶ ┌───────────────────┐
 │  5. Worker returns tokens                       │◀── { access_token } ── │ Cloudflare Worker │
 │  6. Frontend calls Strava API directly          │                        │ (token exchange)  │
-│     - GET /segments/explore                     │                        └──────┬───────────┘
+│     - GET /segments/explore                     │                        └──────┬────────────┘
 │     - GET /segments/{id}                        │                               │
 │                                                 │                        POST /oauth/token
 │  Map: Leaflet + CARTO Dark tiles                │                               │
 │  Segments: Polylines from encoded polyline data │                               ▼
 └─────────────────────────────────────────────────┘                     ┌──────────────────┐
-                                                                       │   Strava API      │
-                                                                       └──────────────────┘
+                                                                        │   Strava API     │
+                                                                        └──────────────────┘
 ```
 
 ## Setup
