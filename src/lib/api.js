@@ -1,7 +1,5 @@
-import { AUTH_WORKER_URL } from './constants.js';
-
 async function workerRequest(path, token, method = 'GET') {
-  const res = await fetch(`${AUTH_WORKER_URL}${path}`, {
+  const res = await fetch(path, {
     method,
     headers: { Authorization: `Bearer ${token}` },
   });

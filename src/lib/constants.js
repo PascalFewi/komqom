@@ -3,7 +3,6 @@ export const STRAVA_API = 'https://www.strava.com/api/v3';
 
 // OAuth config — client_id comes from env, secret stays on the worker
 export const STRAVA_CLIENT_ID = import.meta.env.VITE_STRAVA_CLIENT_ID;
-export const AUTH_WORKER_URL = import.meta.env.VITE_AUTH_WORKER_URL;
 
 // OAuth redirect: back to the app root
 export const REDIRECT_URI = `${window.location.origin}/`;

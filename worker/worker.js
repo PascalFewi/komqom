@@ -11,7 +11,6 @@
  *
  * Environment (wrangler.toml + secrets):
  *   DB                  D1 database binding
- *   ALLOWED_ORIGIN      Frontend origin e.g. https://komqom.ch
  *   STRAVA_CLIENT_ID    For OAuth exchange
  *   STRAVA_CLIENT_SECRET
  *
@@ -30,44 +29,38 @@ const STRAVA_API           = 'https://www.strava.com/api/v3';
 
 export default {
   async fetch(request, env) {
-    if (request.method === 'OPTIONS') {
-      return cors(env, new Response(null, { status: 204 }));
-    }
-
     const url = new URL(request.url);
     const parts = url.pathname.split('/').filter(Boolean);
-    // parts: ['api', 'segments', ':id'] or ['api', 'segments', ':id', 'refresh']
-    // Also handle OAuth endpoints
-    
+
     try {
       // ── OAuth ──────────────────────────────────────────────────────────
       if (parts[0] === 'exchange' && request.method === 'POST') {
-        return cors(env, await handleExchange(request, env));
+        return await handleExchange(request, env);
       }
       if (parts[0] === 'refresh-token' && request.method === 'POST') {
-        return cors(env, await handleRefreshToken(request, env));
+        return await handleRefreshToken(request, env);
       }
 
       // ── Segment endpoints ──────────────────────────────────────────────
       if (parts[0] === 'api' && parts[1] === 'segments' && parts[2]) {
         const segmentId = parseInt(parts[2], 10);
-        if (isNaN(segmentId)) return cors(env, json({ error: 'Invalid segment ID' }, 400));
+        if (isNaN(segmentId)) return json({ error: 'Invalid segment ID' }, 400);
 
         // POST /api/segments/:id/refresh
         if (parts[3] === 'refresh' && request.method === 'POST') {
-          return cors(env, await handleRefresh(request, env, segmentId));
+          return await handleRefresh(request, env, segmentId);
         }
 
         // GET /api/segments/:id
         if (request.method === 'GET') {
-          return cors(env, await handleSegment(request, env, segmentId));
+          return await handleSegment(request, env, segmentId);
         }
       }
 
-      return cors(env, json({ error: 'Not found' }, 404));
+      return json({ error: 'Not found' }, 404);
     } catch (err) {
       console.error('Worker error:', err);
-      return cors(env, json({ error: 'Internal server error' }, 500));
+      return json({ error: 'Internal server error' }, 500);
     }
   },
 };
@@ -308,16 +301,6 @@ function json(data, status = 200) {
     status,
     headers: { 'Content-Type': 'application/json' },
   });
-}
-
-function cors(env, response) {
-  const origin = env.ALLOWED_ORIGIN || '*';
-  const headers = new Headers(response.headers);
-  headers.set('Access-Control-Allow-Origin', origin);
-  headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  headers.set('Access-Control-Max-Age', '86400');
-  return new Response(response.body, { status: response.status, headers });
 }
 
 /**

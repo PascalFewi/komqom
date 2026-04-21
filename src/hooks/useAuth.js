@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   STRAVA_CLIENT_ID,
-  AUTH_WORKER_URL,
   REDIRECT_URI,
   LS_ACCESS_TOKEN,
   LS_REFRESH_TOKEN,
@@ -52,7 +51,7 @@ export function useAuth() {
     setError(null);
 
     try {
-      const res = await fetch(`${AUTH_WORKER_URL}/exchange`, {
+      const res = await fetch('/exchange', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code }),
@@ -81,7 +80,7 @@ export function useAuth() {
     }
 
     try {
-      const res = await fetch(`${AUTH_WORKER_URL}/refresh`, {
+      const res = await fetch('/refresh-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh_token: refreshTok }),
