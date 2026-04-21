@@ -1,26 +1,13 @@
 import React from 'react';
+import { parseKomTime } from '../lib/segmentDifficulty.js';
 
-/**
- * Single segment card showing key stats.
- *
- * Props:
- * - segment: { data, details }
- * - difficulty: { komPower, komPowerWKg, difficultyScore, difficultyClass, isValid }
- * - isActive: boolean
- * - onClick: () => void
- */
-export default function SegmentCard({ segment, difficulty, isActive, onClick }) {
+export default function SegmentCard({ segment, difficulty, isActive, onClick, genderType }) {
   const { data, details } = segment;
-  const { komPower, difficultyScore, difficultyClass, isValid } = difficulty;
+  const { komPower, komPowerWKg, difficultyClass, isValid } = difficulty;
 
-  // Distance: prefer details (more accurate), fallback to explore data
   const dist = details?.distance || data.distance;
   const distStr = formatDistance(dist);
-
-  // Grade
   const grade = data.avg_grade != null ? `${data.avg_grade.toFixed(1)}%` : '—';
-
-  // Elevation
   const elev =
     data.elev_difference != null
       ? `${Math.round(data.elev_difference)} m`
@@ -28,27 +15,23 @@ export default function SegmentCard({ segment, difficulty, isActive, onClick }) 
         ? `${Math.round(details.total_elevation_gain)} m`
         : '—';
 
-  // KOM time (from segment details xoms)
-  const kom = details?.xoms?.kom || '—';
+  const isQueen = genderType === 'queen';
+  const komQomTime = (isQueen ? details?.xoms?.qom : details?.xoms?.kom) || '—';
 
-  // Elevation profile SVG
+  const komSeconds = parseKomTime(komQomTime);
+  const avgSpeed =
+    komSeconds && dist ? `${((dist / komSeconds) * 3.6).toFixed(1)} km/h` : '—';
+
   const elevProfile = data.elevation_profile;
-
-  // Star info
   const starred = details?.starred ?? false;
   const starCount = details?.star_count ?? '';
-
-  // Strava link — convert deep-link to browser URL
   const stravaHref = details?.xoms?.destination?.href?.replace(
     'strava://',
     'https://www.strava.com/'
   );
 
   return (
-    <div
-      className={`seg-card ${isActive ? 'active' : ''}`}
-      onClick={onClick}
-    >
+    <div className={`seg-card ${isActive ? 'active' : ''}`} onClick={onClick}>
       <div className="seg-card-header">
         <div className="seg-name" title={data.name}>
           {data.name}
@@ -76,25 +59,15 @@ export default function SegmentCard({ segment, difficulty, isActive, onClick }) 
         <Stat label="Länge" value={distStr} />
         <Stat label="Steigung" value={grade} />
         <Stat label="Höhe" value={elev} />
-        <Stat label="KOM" value={kom} />
+        <Stat label="Ø Speed" value={avgSpeed} />
       </div>
 
       {isValid && (
-        <div className="seg-difficulty">
-          <div
-            className={`seg-difficulty-badge ${difficultyClass.class}`}
-            style={{ backgroundColor: difficultyClass.color }}
-          >
-            <span className="seg-difficulty-score">
-              {Math.round(difficultyScore)}
-            </span>
-            <span className="seg-difficulty-label">
-              {difficultyClass.label}
-            </span>
-          </div>
-          <div className="seg-difficulty-power">
-            {komPower.toFixed(0)} W &#x26A1;
-          </div>
+        <div
+          className="seg-difficulty-bar"
+          style={{ backgroundColor: difficultyClass.color + '4D' }}
+        >
+          ~ {komPower.toFixed(0)} W  für {komQomTime}
         </div>
       )}
 

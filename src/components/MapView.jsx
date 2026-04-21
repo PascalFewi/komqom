@@ -162,7 +162,7 @@ export default function MapView({ segments, activeId, onBoundsChange, onSegmentC
   const [showZoomHint, setShowZoomHint] = useZoomHint(mapRef);
 
   return (
-    <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
+    <div style={{ position: 'absolute', inset: 0 }}>
       <div ref={containerRef} id="map" style={{ width: '100%', height: '100%' }} />
       {showZoomHint && (
         <div className="zoom-hint">Zoom in closer to load segments</div>

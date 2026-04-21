@@ -2,26 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import SegmentCard from './SegmentCard.jsx';
 import { getSegmentDifficulty } from '../lib/segmentDifficulty.js';
 
-/**
- * Bottom panel showing segment cards in a horizontal scroll.
- *
- * Features:
- * - Expandable (click header to toggle)
- * - Filters segments to those visible in current map bounds
- * - Sorts by difficulty score (easiest first)
- * - Auto-scrolls to active card
- * - Calls onResize when expanded/collapsed (so map can invalidateSize)
- *
- * Props:
- * - segments: { [id]: { data, details } }
- * - activeId: number | null
- * - onSelect(id): select a segment
- * - loading: boolean
- * - mapBounds: [SW_lat, SW_lng, NE_lat, NE_lng] | null
- * - onResize(): called after panel toggle
- */
-
-const RIDER_MASS = 75; // kg — placeholder, could become a prop or setting later
+const SCROLL_AMOUNT = 252; // card width + gap
 
 export default function SegmentPanel({
   segments,
@@ -29,13 +10,13 @@ export default function SegmentPanel({
   onSelect,
   loading,
   mapBounds,
-  onResize,
+  genderType,
+  riderMass,
 }) {
-  const [expanded, setExpanded] = useState(false);
   const scrollRef = useRef(null);
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(false);
 
-  // Filter to visible segments (within current map bounds),
-  // then compute difficulty for each
   const visible = Object.entries(segments)
     .filter(([_, s]) => {
       if (!mapBounds) return true;
@@ -46,10 +27,9 @@ export default function SegmentPanel({
     .map(([id, seg]) => ({
       id,
       seg,
-      difficulty: getSegmentDifficulty(seg, RIDER_MASS),
+      difficulty: getSegmentDifficulty(seg, riderMass, genderType),
     }));
 
-  // Sort by difficulty: valid scores first, then ascending (easiest first)
   visible.sort((a, b) => {
     if (a.difficulty.isValid !== b.difficulty.isValid) {
       return a.difficulty.isValid ? -1 : 1;
@@ -57,33 +37,38 @@ export default function SegmentPanel({
     return (a.difficulty.difficultyScore || 0) - (b.difficulty.difficultyScore || 0);
   });
 
-  // Auto-scroll to active card
+  function updateArrows() {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanLeft(el.scrollLeft > 0);
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  }
+
+  useEffect(() => {
+    updateArrows();
+  }, [visible.length]);
+
   useEffect(() => {
     if (activeId && scrollRef.current) {
       const card = scrollRef.current.querySelector(`[data-seg-id="${activeId}"]`);
       card?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      setTimeout(updateArrows, 400);
     }
   }, [activeId]);
 
-  function toggleExpanded() {
-    setExpanded((e) => !e);
-    // Give CSS transition time, then tell parent to resize map
-    setTimeout(() => onResize?.(), 350);
+  function scrollBy(dir) {
+    scrollRef.current?.scrollBy({ left: dir * SCROLL_AMOUNT, behavior: 'smooth' });
+    setTimeout(updateArrows, 350);
   }
 
   return (
-    <div className={`panel ${expanded ? 'expanded' : ''}`}>
-      <div className="panel-header" onClick={toggleExpanded}>
-        <span className="panel-title">
-          Segments{' '}
-          {visible.length > 0 && (
-            <span className="panel-count">({visible.length} sichtbar)</span>
-          )}
-        </span>
-        <span className="panel-toggle">▲</span>
-      </div>
+    <div className="panel">
+      <button
+        className={`panel-arrow panel-arrow-left ${canLeft ? '' : 'panel-arrow-hidden'}`}
+        onClick={() => scrollBy(-1)}
+      >&lt;</button>
 
-      <div className="panel-scroll" ref={scrollRef}>
+      <div className="panel-scroll" ref={scrollRef} onScroll={updateArrows}>
         {loading && visible.length === 0 ? (
           <div className="status-msg">
             <span className="loading-spinner" /> Segmente laden…
@@ -100,11 +85,17 @@ export default function SegmentPanel({
                 difficulty={difficulty}
                 isActive={Number(id) === activeId}
                 onClick={() => onSelect(Number(id))}
+                genderType={genderType}
               />
             </div>
           ))
         )}
       </div>
+
+      <button
+        className={`panel-arrow panel-arrow-right ${canRight ? '' : 'panel-arrow-hidden'}`}
+        onClick={() => scrollBy(1)}
+      >&gt;</button>
     </div>
   );
 }

@@ -26,16 +26,22 @@ async function request(endpoint, token) {
  * @param {string} token - Access token
  * @param {object} params
  * @param {[number,number,number,number]} params.bounds - [SW_lat, SW_lng, NE_lat, NE_lng]
- * @param {'riding'|'running'} params.activityType
  * @returns {Promise<Array>} Array of segment summaries
  */
-export async function exploreSegments(token, { bounds, activityType }) {
+export async function exploreSegments(token, { bounds }) {
   const boundsStr = bounds.map((b) => b.toFixed(6)).join(',');
   const data = await request(
-    `/segments/explore?bounds=${boundsStr}&activity_type=${activityType}`,
+    `/segments/explore?bounds=${boundsStr}&activity_type=riding&sSurface=2`,
     token
   );
   return data.segments || [];
+}
+
+/**
+ * Get the authenticated athlete's profile (includes weight in kg).
+ */
+export async function getAthlete(token) {
+  return request('/athlete', token);
 }
 
 /**

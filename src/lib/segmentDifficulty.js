@@ -15,7 +15,7 @@ const PHYSICS = {
   rho: 1.2,          // Luftdichte [kg/m³]
   bikeMass: 8,       // Fahrradgewicht [kg]
   Crr: 0.004,        // Rollwiderstand [-]
-  CdA: 0.28,         // Luftwiderstand [m²]
+  CdA: 0.32,         // Luftwiderstand [m²]
   eta: 0.98,         // Antriebseffizienz [-]
 };
 
@@ -103,16 +103,17 @@ function calculateRequiredW(distance, elevation, timeSeconds, riderMass) {
   const { g, rho, bikeMass, Crr, CdA, eta } = PHYSICS;
   
   const v = distance / timeSeconds;              // Geschwindigkeit [m/s]
-  const grade = elevation / distance;            // Steigung [-]
+  const grade = Math.min(elevation / distance, 0.99);            // Steigung [-]
   const totalMass = riderMass + bikeMass;        // Gesamtmasse [kg]
   
   // Power-Komponenten [W]
   const P_gravity = totalMass * g * v * grade;
-  const P_rolling = totalMass * g * v * Crr;
   const P_aero = 0.5 * rho * CdA * v * v * v;
+  const cosTheta = Math.sqrt(1 - grade * grade);
+  const P_rolling = totalMass * g * v * Crr * cosTheta;
   
   // Total (mit Antriebsverlusten)
-  const P_total = (P_gravity + P_rolling + P_aero) / eta;
+  const P_total = Math.max(0, (P_gravity + P_rolling + P_aero) / eta);
   const P_totalWkg = P_total / riderMass;
   return  {P_total, P_totalWkg};
 }
@@ -203,18 +204,13 @@ export function calculateSegmentDifficulty({ distance, elevation, komTime, rider
  * @param {number} riderMass - Fahrergewicht in kg
  * @returns {Object} - Difficulty result
  */
-export function getSegmentDifficulty(segment, riderMass) {
+export function getSegmentDifficulty(segment, riderMass, genderType = 'king') {
   const { data, details } = segment;
-  
-  // Distance: prefer details (more accurate)
+
   const distance = details?.distance || data?.distance;
-  
-  // Elevation: prefer elev_difference, fallback to total_elevation_gain
   const elevation = data?.elev_difference ?? details?.total_elevation_gain ?? 0;
-  
-  // KOM time from xoms
-  const komTime = details?.xoms?.kom;
-  
+  const komTime = genderType === 'queen' ? details?.xoms?.qom : details?.xoms?.kom;
+
   return calculateSegmentDifficulty({
     distance,
     elevation,

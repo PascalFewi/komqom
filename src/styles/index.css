@@ -63,6 +63,7 @@ body {
   margin-bottom: 6px;
   background: linear-gradient(135deg, var(--strava-orange), #FF8A50);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -159,8 +160,7 @@ body {
 
 .main-content {
   flex: 1;
-  display: flex;
-  flex-direction: column;
+  position: relative;
   min-height: 0;
 }
 
@@ -224,6 +224,26 @@ body {
 .topbar-type-btn.active {
   background: var(--strava-orange);
   color: #fff;
+}
+
+.topbar-settings-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.topbar-settings-btn:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
 }
 
 .disconnect-btn {
@@ -303,65 +323,62 @@ body {
 /* ── Segment Panel ────────────────────────────── */
 
 .panel {
-  height: 260px;
-  background: var(--bg-panel);
-  border-top: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  transition: height 0.3s ease;
-  z-index: 500;
-}
-
-.panel.expanded {
-  height: 50vh;
-}
-
-.panel-header {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-  user-select: none;
-  flex-shrink: 0;
+  gap: 8px;
+  padding: 0 12px;
+  z-index: 500;
+  pointer-events: none;
 }
 
-.panel-header:hover {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.panel-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
-
-.panel-count {
-  color: var(--accent);
-}
-
-.panel-toggle {
-  font-size: 18px;
-  color: var(--text-dim);
-  transition: transform 0.3s;
-}
-
-.panel.expanded .panel-toggle {
-  transform: rotate(180deg);
+.panel > * {
+  pointer-events: all;
 }
 
 .panel-scroll {
   flex: 1;
-  overflow-x: auto;
+  overflow-x: scroll;
   overflow-y: hidden;
-  padding: 12px 16px;
+  padding: 8px 0;
   display: flex;
   gap: 12px;
   align-items: stretch;
+  scrollbar-width: none;
+}
+
+.panel-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.panel-arrow {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 18px;
+  font-family: 'DM Mono', monospace;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+
+.panel-arrow:hover {
+  color: var(--text-primary);
+}
+
+.panel-arrow-hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* ── Segment Cards ────────────────────────────── */
@@ -509,84 +526,135 @@ body {
 
 /* ── Segment Difficulty ───────────────────────── */
 
-.seg-difficulty {
+.seg-difficulty-bar {
+  width: 100%;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+/* ── Settings Modal ───────────────────────────── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding-top: 10px;
-  margin-top: 10px;
-  border-top: 1px solid var(--border);
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(2px);
 }
 
-.seg-difficulty-badge {
-  display: inline-flex;
-  align-items: center;
+.modal-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 28px 32px;
+  width: 340px;
+  max-width: 92vw;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+.modal-field {
+  display: flex;
+  flex-direction: column;
   gap: 6px;
-  padding: 4px 10px;
-  border-radius: 6px;
+}
+
+.modal-label {
   font-size: 12px;
   font-weight: 600;
-}
-
-.seg-difficulty-score {
-  font-family: 'DM Mono', monospace;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.seg-difficulty-label {
-  opacity: 0.9;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
-  font-size: 10px;
-}
-
-.seg-difficulty-power {
-  font-family: 'DM Mono', monospace;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-muted);
-}
-
-/* Difficulty levels — background colors */
-.seg-difficulty-badge.easy {
-  background: rgba(46, 204, 113, 0.15);
-  color: var(--green);
-}
-
-.seg-difficulty-badge.accessible {
-  background: rgba(46, 204, 113, 0.12);
-  color: #27ae60;
-}
-
-.seg-difficulty-badge.moderate {
-  background: rgba(245, 158, 11, 0.12);
-  color: var(--yellow);
-}
-
-.seg-difficulty-badge.hard {
-  background: rgba(252, 82, 0, 0.12);
-  color: var(--accent);
-}
-
-.seg-difficulty-badge.very-hard {
-  background: rgba(239, 68, 68, 0.12);
-  color: var(--red);
-}
-
-.seg-difficulty-badge.extreme {
-  background: rgba(139, 92, 246, 0.15);
-  color: #a78bfa;
-}
-
-.seg-difficulty-badge.suspicious {
-  background: rgba(136, 136, 168, 0.12);
-  color: var(--text-muted);
-}
-
-.seg-difficulty-badge.unknown {
-  background: rgba(85, 85, 119, 0.12);
+  letter-spacing: 0.6px;
   color: var(--text-dim);
+}
+
+.modal-input {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: 'DM Mono', monospace;
+  font-size: 20px;
+  font-weight: 500;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+.modal-input:focus {
+  border-color: var(--strava-orange);
+}
+
+.modal-hint {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.modal-hint-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.modal-hint-btn:hover {
+  text-decoration: underline;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+}
+
+.modal-btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.modal-btn-secondary:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+}
+
+.modal-btn-primary {
+  background: var(--strava-orange);
+  color: #fff;
+}
+
+.modal-btn-primary:hover {
+  background: var(--accent);
 }
 
 /* ── Status & Loading ─────────────────────────── */

@@ -29,4 +29,5 @@ export const MOVE_DEBOUNCE = 350;
 export const LS_ACCESS_TOKEN = 'strava_access_token';
 export const LS_REFRESH_TOKEN = 'strava_refresh_token';
 export const LS_TOKEN_EXPIRES = 'strava_token_expires';
-export const LS_ACTIVITY_TYPE = 'strava_activity_type';
+export const LS_GENDER_TYPE = 'strava_gender_type';
+export const LS_RIDER_MASS = 'rider_mass';
