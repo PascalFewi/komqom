@@ -13,6 +13,7 @@ export default function SegmentPanel({
   genderType,
   riderMass,
   bikeProfile,
+  onRefreshSegment,
 }) {
   const scrollRef = useRef(null);
   const [canLeft, setCanLeft] = useState(false);
@@ -90,6 +91,7 @@ export default function SegmentPanel({
                 isActive={Number(id) === activeId}
                 onClick={() => onSelect(Number(id))}
                 genderType={genderType}
+                onRefresh={onRefreshSegment ? () => onRefreshSegment(Number(id)) : undefined}
               />
             </div>
           ))

@@ -164,7 +164,7 @@ export function getSegmentDifficulty(segment, riderMass, genderType = 'king', bi
 
   const distance = details?.distance || data?.distance;
   const elevation = data?.elev_difference ?? details?.total_elevation_gain ?? 0;
-  const komTime = genderType === 'queen' ? details?.xoms?.qom : details?.xoms?.kom;
+  const komTime = genderType === 'queen' ? details?.qom_time : details?.kom_time;
 
   const profile = BIKE_PROFILES[bikeProfile] || BIKE_PROFILES.road;
   const isPaved = surface !== 'unpaved';

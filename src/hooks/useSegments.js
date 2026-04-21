@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
-import { exploreSegments, getSegmentById } from '../lib/strava.js';
+import { exploreSegments } from '../lib/strava.js';
+import { getSegmentDetail, refreshSegment } from '../lib/api.js';
 
 /**
  * Manages segment state: loading from API, storing, selecting.
@@ -67,18 +68,30 @@ export function useSegments(getValidToken) {
       const token = await getValidToken();
       if (!token) return;
 
-      const details = await getSegmentById(token, segmentId);
+      const details = await getSegmentDetail(token, segmentId);
       setSegments((prev) => {
         if (!prev[segmentId]) return prev;
-        return {
-          ...prev,
-          [segmentId]: { ...prev[segmentId], details },
-        };
+        return { ...prev, [segmentId]: { ...prev[segmentId], details } };
       });
     } catch (err) {
       console.warn(`Failed to load details for segment ${segmentId}`);
     }
   }
+
+  const refreshDetail = useCallback(async (segmentId) => {
+    const token = await getValidToken();
+    if (!token) return;
+    try {
+      const details = await refreshSegment(token, segmentId);
+      if (details.refreshAllowed === false) return;
+      setSegments((prev) => {
+        if (!prev[segmentId]) return prev;
+        return { ...prev, [segmentId]: { ...prev[segmentId], details } };
+      });
+    } catch (err) {
+      console.warn(`Failed to refresh segment ${segmentId}:`, err);
+    }
+  }, [getValidToken]);
 
   const clearAll = useCallback(() => {
     setSegments({});
@@ -93,6 +106,7 @@ export function useSegments(getValidToken) {
     loading,
     error,
     loadForBounds,
+    refreshDetail,
     clearAll,
   };
 }

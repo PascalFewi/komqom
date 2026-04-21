@@ -14,7 +14,7 @@ const DEFAULT_MASS = 75;
 
 export default function App() {
   const { getValidToken, loading: authLoading, error: authError, login, logout, isAuthenticated } = useAuth();
-  const { segments, activeId, setActiveId, loading, error, loadForBounds } = useSegments(getValidToken);
+  const { segments, activeId, setActiveId, loading, error, loadForBounds, refreshDetail } = useSegments(getValidToken);
 
   const [genderType, setGenderType] = useState(
     () => localStorage.getItem(LS_GENDER_TYPE) || 'king'
@@ -156,6 +156,7 @@ export default function App() {
           genderType={genderType}
           riderMass={riderMass}
           bikeProfile={bikeProfile}
+          onRefreshSegment={refreshDetail}
         />
       </div>
 

@@ -550,6 +550,42 @@ body {
 
 }
 
+/* ── Extracted At / Refresh ──────────────────── */
+
+.seg-extracted {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px 2px;
+  gap: 6px;
+}
+
+.seg-extracted-date {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.seg-refresh-btn {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: var(--text-muted);
+  line-height: 1;
+  border-radius: 3px;
+}
+
+.seg-refresh-btn:hover:not(:disabled) {
+  color: var(--accent);
+}
+
+.seg-refresh-btn:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
 /* ── Strava Link ─────────────────────────────── */
 
 .seg-strava-link {
