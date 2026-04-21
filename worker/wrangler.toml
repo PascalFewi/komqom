@@ -7,6 +7,12 @@ binding = "DB"
 database_name = "segments"
 database_id   = "d896c65f-8a77-4613-a2e1-579974dcfaaf"   # paste from: npx wrangler d1 list
 
+routes = [
+  { pattern = "komqom.app/api/*", zone_name = "komqom.app" },
+  { pattern = "komqom.app/exchange", zone_name = "komqom.app" },
+  { pattern = "komqom.app/refresh-token", zone_name = "komqom.app" }
+]
+
 # Secrets (set via CLI, never commit):
 #   npx wrangler secret put STRAVA_CLIENT_ID
 #   npx wrangler secret put STRAVA_CLIENT_SECRET

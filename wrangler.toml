@@ -1,8 +1,3 @@
-name = "segment-scout"
+name = komqom"
 pages_build_output_dir = "dist"
 
-routes = [
-  { pattern = "komqom.app/api/*", zone_name = "komqom.app" },
-  { pattern = "komqom.app/exchange", zone_name = "komqom.app" },
-  { pattern = "komqom.app/refresh-token", zone_name = "komqom.app" },
-]
