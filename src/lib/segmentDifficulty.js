@@ -1,23 +1,14 @@
-/**
- * Strava Segment Difficulty Utilities
- * 
- * Berechnet Difficulty Score basierend auf:
- * 1. Physik-Modell (Gravity + Rolling + Aero)
- * 2. 3-Parameter Critical Power Model
- */
+import { BIKE_PROFILES } from './constants.js';
 
 // ============================================================================
 // KONSTANTEN
 // ============================================================================
 
 const PHYSICS = {
-  g: 9.81,           // Gravitation [m/s²]
-  rho: 1.2,          // Luftdichte [kg/m³]
-  bikeMass: 8,       // Fahrradgewicht [kg]
-  Crr: 0.004,        // Rollwiderstand [-]
-  CdA: 0.32,         // Luftwiderstand [m²]
-  eta: 0.98,         // Antriebseffizienz [-]
-};
+  g: 9.81,   // Gravitation [m/s²]
+  rho: 1.2,  // Luftdichte [kg/m³]
+  eta: 0.98, // Antriebseffizienz [-]
+};  
 
 // 3-P CP Model für "Good" Level (Coggan)
 const CP_MODEL = {
@@ -97,25 +88,25 @@ function referencePower(t) {
  * @param {number} elevation - Höhenmeter
  * @param {number} timeSeconds - Zeit in Sekunden
  * @param {number} riderMass - Fahrergewicht in kg
- * @returns {number} - Benötigte W/kg
+ * @param {{ CdA: number, bikeMass: number, Crr: number }} profilePhysics
+ * @returns {{ P_total: number, P_totalWkg: number }}
  */
-function calculateRequiredW(distance, elevation, timeSeconds, riderMass) {
-  const { g, rho, bikeMass, Crr, CdA, eta } = PHYSICS;
-  
-  const v = distance / timeSeconds;              // Geschwindigkeit [m/s]
-  const grade = Math.min(elevation / distance, 0.99);            // Steigung [-]
-  const totalMass = riderMass + bikeMass;        // Gesamtmasse [kg]
-  
-  // Power-Komponenten [W]
+function calculateRequiredW(distance, elevation, timeSeconds, riderMass, profilePhysics) {
+  const { g, rho, eta } = PHYSICS;
+  const { CdA, bikeMass, Crr } = profilePhysics;
+
+  const v = distance / timeSeconds;
+  const grade = Math.min(elevation / distance, 0.99);
+  const totalMass = riderMass + bikeMass;
+
   const P_gravity = totalMass * g * v * grade;
   const P_aero = 0.5 * rho * CdA * v * v * v;
   const cosTheta = Math.sqrt(1 - grade * grade);
   const P_rolling = totalMass * g * v * Crr * cosTheta;
-  
-  // Total (mit Antriebsverlusten)
+
   const P_total = Math.max(0, (P_gravity + P_rolling + P_aero) / eta);
   const P_totalWkg = P_total / riderMass;
-  return  {P_total, P_totalWkg};
+  return { P_total, P_totalWkg };
 }
 
 /**
@@ -140,19 +131,9 @@ function getDifficultyClass(score) {
 // MAIN EXPORT
 // ============================================================================
 
-/**
- * Berechnet alle Difficulty-Metriken für ein Segment
- * 
- * @param {Object} options
- * @param {number} options.distance - Segment-Länge in Metern
- * @param {number} options.elevation - Höhenmeter
- * @param {string} options.komTime - KOM-Zeit als String (z.B. "5:30")
- * @param {number} options.riderMass - Fahrergewicht in kg
- * 
- * @returns {Object} - { komPower, difficultyScore, difficultyClass, ... }
- */
-export function calculateSegmentDifficulty({ distance, elevation, komTime, riderMass }) {
-  // Default return wenn Daten fehlen
+const DEFAULT_PROFILE_PHYSICS = { CdA: 0.32, bikeMass: 8, Crr: 0.004 };
+
+export function calculateSegmentDifficulty({ distance, elevation, komTime, riderMass, profilePhysics = DEFAULT_PROFILE_PHYSICS }) {
   const defaultResult = {
     komPower: null,
     komPowerWKg: null,
@@ -160,63 +141,37 @@ export function calculateSegmentDifficulty({ distance, elevation, komTime, rider
     difficultyClass: { class: 'unknown', label: '—', color: '#9ca3af' },
     isValid: false,
   };
-  
-    // debugging
-  if (
-    (!distance || distance <= 0)
-    || (elevation == null)
-    || (!riderMass || riderMass <= 0)
-    || (!komTime)
-  ) {
-    console.log('Ungültige Daten für Difficulty-Berechnung:', { distance, elevation, komTime, riderMass });
+
+  if (!distance || distance <= 0 || elevation == null || !riderMass || riderMass <= 0 || !komTime) {
     return defaultResult;
   }
 
-  // Validierung
-  if (!distance || distance <= 0) return defaultResult;
-  if (elevation == null) return defaultResult;
-  if (!riderMass || riderMass <= 0) return defaultResult;
-  
   const komSeconds = parseKomTime(komTime);
   if (!komSeconds || komSeconds <= 0) return defaultResult;
 
-  // Berechnungen
-  const powerResult = calculateRequiredW(distance, elevation, komSeconds, riderMass);
+  const powerResult = calculateRequiredW(distance, elevation, komSeconds, riderMass, profilePhysics);
   const komPower = powerResult.P_total;
   const komPowerWKg = powerResult.P_totalWkg;
   const refPower = referencePower(komSeconds);
   const difficultyScore = (komPowerWKg / refPower) * 100;
   const difficultyClass = getDifficultyClass(difficultyScore);
-  
-  return {
-    komPower, 
-    komPowerWKg ,                  // W/kg benötigt für KOM
-    difficultyScore,             // Score in %
-    difficultyClass,             // { class, label, color }
-    isValid: true,
-  };
+
+  return { komPower, komPowerWKg, difficultyScore, difficultyClass, isValid: true };
 }
 
-/**
- * Shorthand: Holt Difficulty aus Segment-Objekt (Strava API Format)
- * 
- * @param {Object} segment - { data, details }
- * @param {number} riderMass - Fahrergewicht in kg
- * @returns {Object} - Difficulty result
- */
-export function getSegmentDifficulty(segment, riderMass, genderType = 'king') {
-  const { data, details } = segment;
+export function getSegmentDifficulty(segment, riderMass, genderType = 'king', bikeProfile = 'road') {
+  const { data, details, surface } = segment;
 
   const distance = details?.distance || data?.distance;
   const elevation = data?.elev_difference ?? details?.total_elevation_gain ?? 0;
   const komTime = genderType === 'queen' ? details?.xoms?.qom : details?.xoms?.kom;
 
-  return calculateSegmentDifficulty({
-    distance,
-    elevation,
-    komTime,
-    riderMass,
-  });
+  const profile = BIKE_PROFILES[bikeProfile] || BIKE_PROFILES.road;
+  const isPaved = surface !== 'unpaved';
+  const Crr = isPaved ? profile.Crr.paved : profile.Crr.unpaved;
+  const profilePhysics = { CdA: profile.CdA, bikeMass: profile.bikeMass, Crr };
+
+  return calculateSegmentDifficulty({ distance, elevation, komTime, riderMass, profilePhysics });
 }
 
 // ============================================================================

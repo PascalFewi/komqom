@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useAuth } from './hooks/useAuth.js';
 import { useSegments } from './hooks/useSegments.js';
 import AuthScreen from './components/AuthScreen.jsx';
@@ -6,8 +6,9 @@ import TopBar from './components/TopBar.jsx';
 import MapView from './components/MapView.jsx';
 import SegmentPanel from './components/SegmentPanel.jsx';
 import SettingsModal from './components/SettingsModal.jsx';
+import StatusBar from './components/StatusBar.jsx';
 import { getAthlete } from './lib/strava.js';
-import { LS_GENDER_TYPE, LS_RIDER_MASS } from './lib/constants.js';
+import { LS_GENDER_TYPE, LS_RIDER_MASS, LS_BIKE_PROFILE } from './lib/constants.js';
 
 const DEFAULT_MASS = 75;
 
@@ -18,12 +19,33 @@ export default function App() {
   const [genderType, setGenderType] = useState(
     () => localStorage.getItem(LS_GENDER_TYPE) || 'king'
   );
+  const [bikeProfile, setBikeProfile] = useState(
+    () => localStorage.getItem(LS_BIKE_PROFILE) || 'road'
+  );
   const [riderMass, setRiderMass] = useState(
     () => parseFloat(localStorage.getItem(LS_RIDER_MASS)) || DEFAULT_MASS
   );
   const [stravaWeight, setStravaWeight] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [mapBounds, setMapBounds] = useState(null);
+  const [pendingSearch, setPendingSearch] = useState(false);
+  const hasSearchedOnce = useRef(false);
+  const [zoomTooLow, setZoomTooLow] = useState(false);
+  const [displayError, setDisplayError] = useState(null);
+
+  // Auto-dismiss API errors after 5 s; zoom hint persists until resolved
+  useEffect(() => {
+    if (!error) { setDisplayError(null); return; }
+    setDisplayError(error);
+    const t = setTimeout(() => setDisplayError(null), 5000);
+    return () => clearTimeout(t);
+  }, [error]);
+
+  const statusMessage = displayError
+    ? { type: 'error', text: displayError }
+    : zoomTooLow
+    ? { type: 'info', text: 'Zoom in closer to load segments' }
+    : null;
 
   // On first auth: fetch athlete weight, auto-show settings if mass not yet stored
   useEffect(() => {
@@ -52,14 +74,30 @@ export default function App() {
   const handleBoundsChange = useCallback(
     (bounds) => {
       setMapBounds(bounds);
-      loadForBounds(bounds);
+      if (!hasSearchedOnce.current) {
+        hasSearchedOnce.current = true;
+        loadForBounds(bounds);
+      } else {
+        setPendingSearch(true);
+      }
     },
     [loadForBounds]
   );
 
+  const handleSearchHere = useCallback(() => {
+    if (!mapBounds) return;
+    setPendingSearch(false);
+    loadForBounds(mapBounds);
+  }, [mapBounds, loadForBounds]);
+
   const handleGenderChange = useCallback((gender) => {
     setGenderType(gender);
     localStorage.setItem(LS_GENDER_TYPE, gender);
+  }, []);
+
+  const handleBikeProfileChange = useCallback((profile) => {
+    setBikeProfile(profile);
+    localStorage.setItem(LS_BIKE_PROFILE, profile);
   }, []);
 
   const handleSaveMass = useCallback((val) => {
@@ -80,18 +118,33 @@ export default function App() {
         segmentCount={segmentCount}
         genderType={genderType}
         onTypeChange={handleGenderChange}
+        bikeProfile={bikeProfile}
+        onBikeProfileChange={handleBikeProfileChange}
         onSettingsOpen={() => setShowSettings(true)}
         onLogout={logout}
       />
 
-      {error && <div className="error-toast">{error}</div>}
+      <StatusBar message={statusMessage} />
 
       <div className="main-content">
+        {pendingSearch && !loading && !zoomTooLow && !displayError && (
+          <button className="search-here-btn" onClick={handleSearchHere}>
+            In diesem Bereich suchen
+          </button>
+        )}
+        {loading && hasSearchedOnce.current && (
+          <div className="search-here-btn search-here-loading">
+            <span className="loading-spinner" /> Segmente laden…
+          </div>
+        )}
+
         <MapView
           segments={segments}
           activeId={activeId}
           onBoundsChange={handleBoundsChange}
           onSegmentClick={setActiveId}
+          bikeProfile={bikeProfile}
+          onZoomChange={setZoomTooLow}
         />
 
         <SegmentPanel
@@ -102,6 +155,7 @@ export default function App() {
           mapBounds={mapBounds}
           genderType={genderType}
           riderMass={riderMass}
+          bikeProfile={bikeProfile}
         />
       </div>
 

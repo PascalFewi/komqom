@@ -31,3 +31,11 @@ export const LS_REFRESH_TOKEN = 'strava_refresh_token';
 export const LS_TOKEN_EXPIRES = 'strava_token_expires';
 export const LS_GENDER_TYPE = 'strava_gender_type';
 export const LS_RIDER_MASS = 'rider_mass';
+export const LS_BIKE_PROFILE = 'strava_bike_profile';
+
+// Bike profile physics constants
+// Crr keys match Strava's surface_type field ('paved' | 'unpaved')
+export const BIKE_PROFILES = {
+  road: { label: 'Road', CdA: 0.32, bikeMass: 8,  Crr: { paved: 0.004, unpaved: 0.004 } },
+  mtb:  { label: 'MTB',  CdA: 0.40, bikeMass: 12, Crr: { paved: 0.008, unpaved: 0.012 } },
+};

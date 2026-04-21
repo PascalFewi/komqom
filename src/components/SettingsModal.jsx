@@ -39,6 +39,26 @@ export default function SettingsModal({ riderMass, stravaWeight, onSave, onClose
               </button>
             </span>
           )}
+          <p className="modal-privacy">
+            Dein Gewicht wird ausschließlich lokal auf diesem Gerät verwendet — es wird nie übertragen.
+            Es fließt in die Berechnung der benötigten Wattzahl pro Segment ein.
+          </p>
+        </div>
+
+        <div className="modal-divider" />
+
+        <div className="modal-info">
+          <div className="modal-info-title">Wie wird die Leistung berechnet?</div>
+          <p className="modal-info-text">
+            Das Modell summiert drei Kräfte: Schwerkraft (Steigung × Gesamtmasse), Rollwiderstand
+            und Luftwiderstand. Die resultierende Wattzahl wird mit dem{' '}
+            <em>Critical-Power-Modell</em> (nach Coggan, „Good"-Level) ins Verhältnis gesetzt —
+            so entsteht der Schwierigkeits-Score in %.
+          </p>
+          <p className="modal-info-text">
+            Road-Profil: CdA 0.32, Rad 8 kg. MTB-Profil: CdA 0.40, Rad 12 kg.
+            Rollwiderstand variiert je nach Untergrund.
+          </p>
         </div>
 
         <div className="modal-actions">

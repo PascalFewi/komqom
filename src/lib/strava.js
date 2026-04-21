@@ -28,13 +28,42 @@ async function request(endpoint, token) {
  * @param {[number,number,number,number]} params.bounds - [SW_lat, SW_lng, NE_lat, NE_lng]
  * @returns {Promise<Array>} Array of segment summaries
  */
+function splitBoundsIntoQuadrants([swLat, swLng, neLat, neLng]) {
+  const midLat = (swLat + neLat) / 2;
+  const midLng = (swLng + neLng) / 2;
+  return [
+    [swLat, swLng, midLat, midLng],
+    [swLat, midLng, midLat, neLng],
+    [midLat, swLng, neLat, midLng],
+    [midLat, midLng, neLat, neLng],
+  ];
+}
+
 export async function exploreSegments(token, { bounds }) {
-  const boundsStr = bounds.map((b) => b.toFixed(6)).join(',');
-  const data = await request(
-    `/segments/explore?bounds=${boundsStr}&activity_type=riding&sSurface=2`,
-    token
-  );
-  return data.segments || [];
+  const quadrants = splitBoundsIntoQuadrants(bounds);
+
+  const requests = quadrants.flatMap((q) => {
+    const boundsStr = q.map((b) => b.toFixed(6)).join(',');
+    const base = `/segments/explore?bounds=${boundsStr}&activity_type=riding`;
+    return [
+      request(`${base}&sSurface=1`, token).then((r) => [r.segments || [], 'paved']),
+      request(`${base}&sSurface=2`, token).then((r) => [r.segments || [], 'unpaved']),
+    ];
+  });
+
+  const responses = await Promise.all(requests);
+
+  const seen = new Set();
+  const results = [];
+  for (const [segs, surface] of responses) {
+    for (const seg of segs) {
+      if (!seen.has(seg.id)) {
+        seen.add(seg.id);
+        results.push({ ...seg, surface });
+      }
+    }
+  }
+  return results;
 }
 
 /**

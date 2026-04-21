@@ -1,16 +1,11 @@
 import React from 'react';
 
-/**
- * Top navigation bar with:
- * - App title
- * - Segment counter badge
- * - Ride/Run toggle
- * - Logout button
- */
 export default function TopBar({
   segmentCount,
   genderType,
   onTypeChange,
+  bikeProfile,
+  onBikeProfileChange,
   onSettingsOpen,
   onLogout,
 }) {
@@ -22,6 +17,21 @@ export default function TopBar({
         <span className="topbar-badge">
           {segmentCount} segment{segmentCount !== 1 ? 's' : ''}
         </span>
+
+        <div className="topbar-type-toggle">
+          <button
+            className={`topbar-type-btn ${bikeProfile === 'road' ? 'active' : ''}`}
+            onClick={() => onBikeProfileChange('road')}
+          >
+            Road
+          </button>
+          <button
+            className={`topbar-type-btn ${bikeProfile === 'mtb' ? 'active' : ''}`}
+            onClick={() => onBikeProfileChange('mtb')}
+          >
+            MTB
+          </button>
+        </div>
 
         <div className="topbar-type-toggle">
           <button

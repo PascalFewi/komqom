@@ -271,20 +271,27 @@ body {
   z-index: 1;
 }
 
-.zoom-hint {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 12px;
+/* ── Status Bar ───────────────────────────────── */
+
+.status-bar {
+  flex-shrink: 0;
+  padding: 7px 20px;
+  font-size: 13px;
   font-weight: 500;
-  z-index: 500;
-  pointer-events: none;
+  text-align: center;
+  z-index: 1000;
+}
+
+.status-bar-error {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--red);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.status-bar-info {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--yellow);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.18);
 }
 
 /* Leaflet control overrides */
@@ -318,6 +325,42 @@ body {
 
 .segment-tooltip::before {
   border-top-color: var(--bg-card) !important;
+}
+
+/* ── Search Here Button ───────────────────────── */
+
+.search-here-btn {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 600;
+  padding: 8px 18px;
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  color: var(--text-primary);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.search-here-btn:hover {
+  background: var(--bg-panel);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.search-here-loading {
+  color: var(--text-muted);
+  cursor: default;
+  pointer-events: none;
 }
 
 /* ── Segment Panel ────────────────────────────── */
@@ -620,6 +663,47 @@ body {
   text-decoration: underline;
 }
 
+.modal-privacy {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-top: 8px;
+}
+
+.modal-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 -4px;
+}
+
+.modal-info {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modal-info-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-dim);
+}
+
+.modal-info-text {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.55;
+}
+
+.modal-info-text em {
+  color: var(--text-muted);
+  font-style: normal;
+}
+
 .modal-actions {
   display: flex;
   gap: 10px;
@@ -685,26 +769,3 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* ── Error Toast ──────────────────────────────── */
-
-.error-toast {
-  position: fixed;
-  top: 64px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--red);
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  z-index: 2000;
-  animation: fadeInOut 4s ease forwards;
-}
-
-@keyframes fadeInOut {
-  0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-  10% { opacity: 1; transform: translateX(-50%) translateY(0); }
-  80% { opacity: 1; }
-  100% { opacity: 0; }
-}

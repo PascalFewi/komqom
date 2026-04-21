@@ -1,11 +1,13 @@
-# Cloudflare Worker configuration
-# Docs: https://developers.cloudflare.com/workers/wrangler/configuration/
-
 name = "strava-auth"
-main = "index.js"
+main = "worker.js"
 compatibility_date = "2024-01-01"
 
-# Set secrets via CLI (never commit these!):
+[[d1_databases]]
+binding = "DB"
+database_name = "segments"
+database_id   = "d896c65f-8a77-4613-a2e1-579974dcfaaf"   # paste from: npx wrangler d1 list
+
+# Secrets (set via CLI, never commit):
 #   npx wrangler secret put STRAVA_CLIENT_ID
 #   npx wrangler secret put STRAVA_CLIENT_SECRET
 #   npx wrangler secret put ALLOWED_ORIGIN

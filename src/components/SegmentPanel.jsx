@@ -12,6 +12,7 @@ export default function SegmentPanel({
   mapBounds,
   genderType,
   riderMass,
+  bikeProfile,
 }) {
   const scrollRef = useRef(null);
   const [canLeft, setCanLeft] = useState(false);
@@ -19,15 +20,18 @@ export default function SegmentPanel({
 
   const visible = Object.entries(segments)
     .filter(([_, s]) => {
-      if (!mapBounds) return true;
-      const [swLat, swLng, neLat, neLng] = mapBounds;
-      const [lat, lng] = s.data.start_latlng;
-      return lat >= swLat && lat <= neLat && lng >= swLng && lng <= neLng;
+      if (mapBounds) {
+        const [swLat, swLng, neLat, neLng] = mapBounds;
+        const [lat, lng] = s.data.start_latlng;
+        if (!(lat >= swLat && lat <= neLat && lng >= swLng && lng <= neLng)) return false;
+      }
+      if (bikeProfile === 'road' && s.surface === 'unpaved') return false;
+      return true;
     })
     .map(([id, seg]) => ({
       id,
       seg,
-      difficulty: getSegmentDifficulty(seg, riderMass, genderType),
+      difficulty: getSegmentDifficulty(seg, riderMass, genderType, bikeProfile),
     }));
 
   visible.sort((a, b) => {

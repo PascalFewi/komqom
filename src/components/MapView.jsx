@@ -28,7 +28,7 @@ import {
  * - onBoundsChange(bounds): called with [SW_lat, SW_lng, NE_lat, NE_lng]
  * - onSegmentClick(id): called when a segment is clicked on the map
  */
-export default function MapView({ segments, activeId, onBoundsChange, onSegmentClick }) {
+export default function MapView({ segments, activeId, onBoundsChange, onSegmentClick, bikeProfile, onZoomChange }) {
   const mapRef = useRef(null);         // Leaflet Map instance
   const containerRef = useRef(null);   // DOM element
   const layersRef = useRef({});        // segmentId -> { polyline, marker }
@@ -130,9 +130,29 @@ export default function MapView({ segments, activeId, onBoundsChange, onSegmentC
     }
   }, [segments, onSegmentClick]);
 
+  // ── Show/hide layers based on bike profile ──────────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    for (const [id, layers] of Object.entries(layersRef.current)) {
+      const seg = segments[id];
+      if (!seg) continue;
+      const isVisible = bikeProfile === 'mtb' || seg.surface !== 'unpaved';
+      if (isVisible) {
+        if (!map.hasLayer(layers.polyline)) layers.polyline.addTo(map);
+        if (!map.hasLayer(layers.marker)) layers.marker.addTo(map);
+      } else {
+        layers.polyline.remove();
+        layers.marker.remove();
+      }
+    }
+  }, [bikeProfile, segments]);
+
   // ── Highlight active segment ────────────────────────────────────
   useEffect(() => {
+    const map = mapRef.current;
     for (const [id, layers] of Object.entries(layersRef.current)) {
+      if (!map?.hasLayer(layers.polyline)) continue; // skip hidden layers
       const isActive = Number(id) === activeId;
       layers.polyline.setStyle({
         color: isActive ? COLOR_ACTIVE : COLOR_DEFAULT,
@@ -158,49 +178,25 @@ export default function MapView({ segments, activeId, onBoundsChange, onSegmentC
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // ── Zoom hint ───────────────────────────────────────────────────
-  const [showZoomHint, setShowZoomHint] = useZoomHint(mapRef);
+  // ── Report zoom level to parent ─────────────────────────────────
+  const onZoomChangeRef = useRef(onZoomChange);
+  onZoomChangeRef.current = onZoomChange;
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!mapRef.current) return;
+      clearInterval(interval);
+      const check = () => onZoomChangeRef.current?.(mapRef.current.getZoom() < MIN_ZOOM_FOR_SEGMENTS);
+      mapRef.current.on('zoomend', check);
+      check();
+    }, 200);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
       <div ref={containerRef} id="map" style={{ width: '100%', height: '100%' }} />
-      {showZoomHint && (
-        <div className="zoom-hint">Zoom in closer to load segments</div>
-      )}
     </div>
   );
 }
 
-/**
- * Tiny hook to track whether the zoom hint should be visible.
- */
-function useZoomHint(mapRef) {
-  const [show, setShow] = useState(false);
-
-  useEffect(() => {
-    const check = () => {
-      if (mapRef.current) {
-        setShow(mapRef.current.getZoom() < MIN_ZOOM_FOR_SEGMENTS);
-      }
-    };
-
-    // Poll until map exists, then attach listener
-    const interval = setInterval(() => {
-      if (mapRef.current) {
-        clearInterval(interval);
-        mapRef.current.on('zoomend', check);
-        check();
-      }
-    }, 200);
-
-    return () => {
-      clearInterval(interval);
-      mapRef.current?.off('zoomend', check);
-    };
-  }, []);
-
-  return [show, setShow];
-}
-
-// Need useState import for the zoom hint hook
-import { useState } from 'react';

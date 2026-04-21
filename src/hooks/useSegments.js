@@ -17,9 +17,8 @@ export function useSegments(getValidToken) {
 
   const loadForBounds = useCallback(
     async (bounds) => {
-      // Get a valid (possibly refreshed) token before calling Strava
       const token = await getValidToken();
-      if (!token) return; // getValidToken triggers logout if refresh fails
+      if (!token) return;
 
       setLoading(true);
       setError(null);
@@ -33,7 +32,8 @@ export function useSegments(getValidToken) {
 
           for (const seg of newSegments) {
             if (!updated[seg.id]) {
-              updated[seg.id] = { data: seg, details: null };
+              const { surface, ...data } = seg;
+              updated[seg.id] = { data, details: null, surface };
               hasNew = true;
 
               if (!detailsFetched.current.has(seg.id)) {
