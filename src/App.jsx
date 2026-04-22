@@ -116,12 +116,7 @@ export default function App() {
     <div className="app-screen">
       <TopBar
         segmentCount={segmentCount}
-        genderType={genderType}
-        onTypeChange={handleGenderChange}
-        bikeProfile={bikeProfile}
-        onBikeProfileChange={handleBikeProfileChange}
         onSettingsOpen={() => setShowSettings(true)}
-        onLogout={logout}
       />
 
       <StatusBar message={statusMessage} />
@@ -166,6 +161,11 @@ export default function App() {
           stravaWeight={stravaWeight}
           onSave={handleSaveMass}
           onClose={() => setShowSettings(false)}
+          genderType={genderType}
+          onTypeChange={handleGenderChange}
+          bikeProfile={bikeProfile}
+          onBikeProfileChange={handleBikeProfileChange}
+          onLogout={logout}
         />
       )}
     </div>

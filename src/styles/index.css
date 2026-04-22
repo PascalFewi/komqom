@@ -185,6 +185,12 @@ body {
   color: var(--accent);
 }
 
+.topbar-strava-logo {
+  height: 22px;
+  width: auto;
+  opacity: 0.85;
+}
+
 .topbar-right {
   display: flex;
   align-items: center;
@@ -596,6 +602,7 @@ body {
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
   width: 100%;
+  text-decoration: none;
   /* existing styles remain */
 }
 
@@ -702,7 +709,7 @@ body {
 
 .modal-privacy {
   font-size: 11px;
-  color: var(--text-dim);
+  color: var(--text-muted);
   line-height: 1.5;
   margin-top: 8px;
 }
@@ -727,24 +734,62 @@ body {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  color: var(--text-dim);
+  color: var(--text-muted);
 }
 
 .modal-info-text {
   font-size: 12px;
-  color: var(--text-dim);
+  color: var(--text-muted);
   line-height: 1.55;
 }
 
 .modal-info-text em {
-  color: var(--text-muted);
+  color: var(--text-primary);
   font-style: normal;
+}
+
+.modal-toggles {
+  display: flex;
+  gap: 10px;
+}
+
+.modal-usage {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.modal-usage-text {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.modal-usage-text strong {
+  color: var(--text-primary);
+}
+
+.modal-usage-note {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 6px;
+  opacity: 0.75;
+}
+
+.modal-btn-logout {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.modal-btn-logout:hover {
+  border-color: var(--red);
+  color: var(--red);
 }
 
 .modal-actions {
   display: flex;
   gap: 10px;
-  justify-content: flex-end;
+  align-items: center;
 }
 
 .modal-btn {

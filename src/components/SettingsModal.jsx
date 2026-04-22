@@ -1,6 +1,16 @@
 import React, { useState } from 'react';
 
-export default function SettingsModal({ riderMass, stravaWeight, onSave, onClose }) {
+export default function SettingsModal({
+  riderMass,
+  stravaWeight,
+  onSave,
+  onClose,
+  genderType,
+  onTypeChange,
+  bikeProfile,
+  onBikeProfileChange,
+  onLogout,
+}) {
   const [input, setInput] = useState(String(riderMass ?? stravaWeight ?? 75));
 
   function handleSave() {
@@ -17,6 +27,52 @@ export default function SettingsModal({ riderMass, stravaWeight, onSave, onClose
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={(e) => e.stopPropagation()}>
         <div className="modal-title">Einstellungen</div>
+
+        <div className="modal-info modal-usage">
+          <p className="modal-usage-text">
+            Bewege die Karte und klicke <strong>„In diesem Bereich suchen"</strong>, um Segmente zu laden.
+            Klicke auf ein Segment, um Details zu sehen. Segmente werden nach Schwierigkeit sortiert — basierend auf der Zeit, die du brauchst, den KOM/QOM zu schlagen.
+          </p>
+          <p className="modal-usage-note">
+            Strava erlaubt nur begrenzte API-Aufrufe (200 pro 15 Min.). Bei häufigem Kartenwechsel kann es kurz zu einer Pause kommen.
+          </p>
+        </div>
+
+        <div className="modal-divider" />
+
+        <div className="modal-toggles">
+          <div className="topbar-type-toggle">
+            <button
+              className={`topbar-type-btn ${bikeProfile === 'road' ? 'active' : ''}`}
+              onClick={() => onBikeProfileChange('road')}
+            >
+              Road
+            </button>
+            <button
+              className={`topbar-type-btn ${bikeProfile === 'mtb' ? 'active' : ''}`}
+              onClick={() => onBikeProfileChange('mtb')}
+            >
+              MTB
+            </button>
+          </div>
+
+          <div className="topbar-type-toggle">
+            <button
+              className={`topbar-type-btn ${genderType === 'king' ? 'active' : ''}`}
+              onClick={() => onTypeChange('king')}
+            >
+              King
+            </button>
+            <button
+              className={`topbar-type-btn ${genderType === 'queen' ? 'active' : ''}`}
+              onClick={() => onTypeChange('queen')}
+            >
+              Queen
+            </button>
+          </div>
+        </div>
+
+        <div className="modal-divider" />
 
         <div className="modal-field">
           <label className="modal-label">Körpergewicht (kg)</label>
@@ -62,6 +118,10 @@ export default function SettingsModal({ riderMass, stravaWeight, onSave, onClose
         </div>
 
         <div className="modal-actions">
+          <button className="modal-btn modal-btn-logout" onClick={onLogout}>
+            Logout
+          </button>
+          <div style={{ flex: 1 }} />
           <button className="modal-btn modal-btn-secondary" onClick={onClose}>
             Abbrechen
           </button>
