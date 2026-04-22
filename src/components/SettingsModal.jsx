@@ -26,7 +26,16 @@ export default function SettingsModal({
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-title">Einstellungen</div>
+        <div className="modal-header">
+          <div className="modal-title">Einstellungen</div>
+          <button className="modal-logout-btn" onClick={onLogout} title="Logout">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+          </button>
+        </div>
 
         <div className="modal-info modal-usage">
           <p className="modal-usage-text">
@@ -122,12 +131,6 @@ export default function SettingsModal({
           </button>
           <button className="modal-btn modal-btn-primary" onClick={handleSave}>
             Speichern
-          </button>
-        </div>
-
-        <div className="modal-actions-logout">
-          <button className="modal-btn modal-btn-logout" onClick={onLogout}>
-            Logout
           </button>
         </div>
       </div>

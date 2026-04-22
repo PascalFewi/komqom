@@ -216,9 +216,9 @@ body {
 
 .topbar-type-btn {
   padding: 5px 14px;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.04);
   color: var(--text-muted);
   font-family: 'DM Sans', sans-serif;
   font-size: 13px;
@@ -227,8 +227,14 @@ body {
   transition: all 0.15s;
 }
 
+.topbar-type-btn:hover:not(.active) {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+}
+
 .topbar-type-btn.active {
   background: var(--strava-orange);
+  border-color: transparent;
   color: #fff;
 }
 
@@ -649,6 +655,28 @@ body {
   gap: 20px;
 }
 
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-logout-btn {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  border-radius: 5px;
+  transition: color 0.15s;
+}
+
+.modal-logout-btn:hover {
+  color: var(--red);
+}
+
 .modal-title {
   font-size: 16px;
   font-weight: 700;
@@ -776,28 +804,9 @@ body {
   opacity: 0.75;
 }
 
-.modal-btn-logout {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-}
-
-.modal-btn-logout:hover {
-  border-color: var(--red);
-  color: var(--red);
-}
-
 .modal-actions-save {
   display: flex;
   gap: 10px;
-  justify-content: flex-end;
-}
-
-.modal-actions-logout {
-  display: flex;
-  justify-content: flex-start;
-  padding-top: 4px;
-  border-top: 1px solid var(--border);
 }
 
 .modal-btn {
@@ -812,19 +821,21 @@ body {
 }
 
 .modal-btn-secondary {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+  flex: 1;
 }
 
 .modal-btn-secondary:hover {
-  border-color: rgba(255, 255, 255, 0.15);
-  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .modal-btn-primary {
   background: var(--strava-orange);
   color: #fff;
+  flex: 1;
 }
 
 .modal-btn-primary:hover {
