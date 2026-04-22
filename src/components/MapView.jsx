@@ -28,11 +28,23 @@ import {
  * - onBoundsChange(bounds): called with [SW_lat, SW_lng, NE_lat, NE_lng]
  * - onSegmentClick(id): called when a segment is clicked on the map
  */
-export default function MapView({ segments, activeId, onBoundsChange, onSegmentClick, bikeProfile, onZoomChange }) {
+function getAdjustedBounds(map, panelOffset) {
+  const b = map.getBounds();
+  if (!panelOffset) return [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()];
+  const size = map.getSize();
+  const adjustedSouth = map.containerPointToLatLng(
+    L.point(size.x / 2, size.y - panelOffset)
+  ).lat;
+  return [adjustedSouth, b.getWest(), b.getNorth(), b.getEast()];
+}
+
+export default function MapView({ segments, activeId, onBoundsChange, onSegmentClick, bikeProfile, onZoomChange, panelOffset }) {
   const mapRef = useRef(null);         // Leaflet Map instance
   const containerRef = useRef(null);   // DOM element
   const layersRef = useRef({});        // segmentId -> { polyline, marker }
   const debounceRef = useRef(null);
+  const panelOffsetRef = useRef(panelOffset || 0);
+  panelOffsetRef.current = panelOffset || 0;
 
   // ── Initialize map ──────────────────────────────────────────────
   useEffect(() => {
@@ -54,8 +66,7 @@ export default function MapView({ segments, activeId, onBoundsChange, onSegmentC
       clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
         if (map.getZoom() < MIN_ZOOM_FOR_SEGMENTS) return;
-        const b = map.getBounds();
-        onBoundsChange([b.getSouth(), b.getWest(), b.getNorth(), b.getEast()]);
+        boundsCallbackRef.current(getAdjustedBounds(map, panelOffsetRef.current));
       }, MOVE_DEBOUNCE);
     });
 
@@ -66,8 +77,7 @@ export default function MapView({ segments, activeId, onBoundsChange, onSegmentC
 
     // Trigger initial load
     setTimeout(() => {
-      const b = map.getBounds();
-      onBoundsChange([b.getSouth(), b.getWest(), b.getNorth(), b.getEast()]);
+      boundsCallbackRef.current(getAdjustedBounds(map, panelOffsetRef.current));
     }, 600);
 
     return () => {

@@ -14,10 +14,27 @@ export default function SegmentPanel({
   riderMass,
   bikeProfile,
   onRefreshSegment,
+  onHeightChange,
 }) {
   const scrollRef = useRef(null);
+  const panelRef = useRef(null);
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
+
+  useEffect(() => {
+    const el = panelRef.current;
+    if (!el || !onHeightChange) return;
+    const report = () => {
+      const parent = el.offsetParent;
+      if (!parent) return;
+      const coverage = parent.getBoundingClientRect().bottom - el.getBoundingClientRect().top;
+      onHeightChange(Math.max(0, coverage));
+    };
+    report();
+    const ro = new ResizeObserver(report);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [onHeightChange]);
 
   const visible = Object.entries(segments)
     .filter(([_, s]) => {
@@ -67,7 +84,7 @@ export default function SegmentPanel({
   }
 
   return (
-    <div className="panel">
+    <div className="panel" ref={panelRef}>
       <button
         className={`panel-arrow panel-arrow-left ${canLeft ? '' : 'panel-arrow-hidden'}`}
         onClick={() => scrollBy(-1)}

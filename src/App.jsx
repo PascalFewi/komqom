@@ -32,6 +32,7 @@ export default function App() {
   const hasSearchedOnce = useRef(false);
   const [zoomTooLow, setZoomTooLow] = useState(false);
   const [displayError, setDisplayError] = useState(null);
+  const [panelOffset, setPanelOffset] = useState(0);
 
   // Auto-dismiss API errors after 5 s; zoom hint persists until resolved
   useEffect(() => {
@@ -140,6 +141,7 @@ export default function App() {
           onSegmentClick={setActiveId}
           bikeProfile={bikeProfile}
           onZoomChange={setZoomTooLow}
+          panelOffset={panelOffset}
         />
 
         <SegmentPanel
@@ -152,6 +154,7 @@ export default function App() {
           riderMass={riderMass}
           bikeProfile={bikeProfile}
           onRefreshSegment={refreshDetail}
+          onHeightChange={setPanelOffset}
         />
       </div>
 
