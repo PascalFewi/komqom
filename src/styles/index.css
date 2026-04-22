@@ -592,6 +592,7 @@ body {
   /* add these to reset button defaults */
   border: none;
   background: none;
+  color:#FC5200;
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
   width: 100%;

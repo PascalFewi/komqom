@@ -108,7 +108,7 @@ export default function SegmentCard({ segment, difficulty, isActive, onClick, ge
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
         >
-          Auf Strava anzeigen →
+          View on Strava
         </a>
       )}
     </div>
