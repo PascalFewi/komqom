@@ -166,11 +166,13 @@ body {
   flex: 1;
   position: relative;
   min-height: 0;
+  overflow: hidden;
 }
 
 /* ── Top Bar ──────────────────────────────────── */
 
 .topbar {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
