@@ -55,7 +55,6 @@ export default function SettingsModal({
               MTB
             </button>
           </div>
-
           <div className="topbar-type-toggle">
             <button
               className={`topbar-type-btn ${genderType === 'king' ? 'active' : ''}`}
@@ -117,16 +116,18 @@ export default function SettingsModal({
           </p>
         </div>
 
-        <div className="modal-actions">
-          <button className="modal-btn modal-btn-logout" onClick={onLogout}>
-            Logout
-          </button>
-          <div style={{ flex: 1 }} />
+        <div className="modal-actions-save">
           <button className="modal-btn modal-btn-secondary" onClick={onClose}>
             Abbrechen
           </button>
           <button className="modal-btn modal-btn-primary" onClick={handleSave}>
             Speichern
+          </button>
+        </div>
+
+        <div className="modal-actions-logout">
+          <button className="modal-btn modal-btn-logout" onClick={onLogout}>
+            Logout
           </button>
         </div>
       </div>

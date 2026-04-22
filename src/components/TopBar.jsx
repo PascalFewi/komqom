@@ -3,16 +3,18 @@ import React from 'react';
 export default function TopBar({ segmentCount, onSettingsOpen }) {
   return (
     <div className="topbar">
-      <img
-        src="/api_logo_pwrdBy_strava_horiz_white.svg"
-        alt="Powered by Strava"
-        className="topbar-strava-logo"
-      />
+      <div className="topbar-title">KOM QOM</div>
 
       <div className="topbar-right">
         <span className="topbar-badge">
           {segmentCount} segment{segmentCount !== 1 ? 's' : ''}
         </span>
+
+        <img
+          src="/api_logo_pwrdBy_strava_horiz_white.svg"
+          alt="Powered by Strava"
+          className="topbar-strava-logo"
+        />
 
         <button className="topbar-settings-btn" onClick={onSettingsOpen} title="Einstellungen">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

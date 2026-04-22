@@ -186,9 +186,9 @@ body {
 }
 
 .topbar-strava-logo {
-  height: 22px;
+  height: 14px;
   width: auto;
-  opacity: 0.85;
+  opacity: 0.55;
 }
 
 .topbar-right {
@@ -750,7 +750,8 @@ body {
 
 .modal-toggles {
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .modal-usage {
@@ -786,10 +787,17 @@ body {
   color: var(--red);
 }
 
-.modal-actions {
+.modal-actions-save {
   display: flex;
   gap: 10px;
-  align-items: center;
+  justify-content: flex-end;
+}
+
+.modal-actions-logout {
+  display: flex;
+  justify-content: flex-start;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
 }
 
 .modal-btn {
