@@ -27,7 +27,7 @@ export default function SegmentCard({ segment, difficulty, isActive, onClick, ge
 
   const elevProfile = data.elevation_profile;
   const starCount = details?.star_count ?? '';
-  const stravaHref = details?.strava_href?.replace('strava://', 'https://www.strava.com/');
+  const stravaHref = details?.strava_href?.replace('strava://', 'https://www.strava.com/').replace(/\/leaderboard$/, '');
 
   const extractedAt = details?.extracted_at;
   const extractedStr = extractedAt ? formatDate(extractedAt) : null;
