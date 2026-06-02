@@ -3,6 +3,26 @@ import { exploreSegments } from '../lib/strava.js';
 import { getSegmentDetail, refreshSegment } from '../lib/api.js';
 
 /**
+ * Build a user-facing message for a 429, distinguishing Strava's
+ * 15-minute limit (resets every :00/:15/:30/:45) from the daily limit
+ * (resets at midnight UTC). Falls back to a generic message when the
+ * rate-limit headers were missing.
+ */
+function rateLimitMessage(rateLimit) {
+  if (rateLimit?.dailyExceeded) {
+    return 'Tägliches API-Limit erreicht. Zurückgesetzt um Mitternacht UTC. Danke Strava';
+  }
+  if (rateLimit?.fifteenMinExceeded) {
+    const now = new Date();
+    const reset = new Date(now);
+    reset.setMinutes(Math.ceil((now.getMinutes() + 1) / 15) * 15, 0, 0);
+    const hhmm = reset.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `15-Minuten API-Limit erreicht. Zurückgesetzt um ${hhmm}. Danke Strava`;
+  }
+  return 'Rate Limit erreicht. Bitte ein paar Minuten warten. Danke Strava';
+}
+
+/**
  * Manages segment state: loading from API, storing, selecting.
  *
  * Key change: uses getValidToken() before every API call,
@@ -51,7 +71,7 @@ export function useSegments(getValidToken) {
           // Token was invalid despite refresh attempt — will be caught on next cycle
           setError('Token abgelaufen. Bitte neu verbinden.');
         } else if (err.status === 429) {
-          setError('Rate Limit erreicht. Bitte ein paar Minuten warten.');
+          setError(rateLimitMessage(err.rateLimit));
         } else {
           setError('Fehler beim Laden der Segmente.');
         }

@@ -5,6 +5,42 @@ import { STRAVA_API } from './constants.js';
  * All methods throw on non-2xx responses with { status, message }.
  */
 
+/**
+ * Parse Strava's rate-limit headers into a structured object.
+ * Each header is two comma-separated values: 15-minute, then daily.
+ * Both the overall and the read-specific limits are considered; a window
+ * counts as exceeded if either set has usage >= limit.
+ * https://developers.strava.com/docs/rate-limits/
+ */
+function parseRateLimit(headers) {
+  const pair = (name) => {
+    const v = headers.get(name);
+    if (!v) return null;
+    const [a, b] = v.split(',').map((n) => parseInt(n.trim(), 10));
+    return Number.isFinite(a) && Number.isFinite(b) ? [a, b] : null;
+  };
+
+  const limit = pair('x-ratelimit-limit');
+  const usage = pair('x-ratelimit-usage');
+  const readLimit = pair('x-readratelimit-limit');
+  const readUsage = pair('x-readratelimit-usage');
+
+  if (!usage && !readUsage) return null;
+
+  const exceeded = (i) =>
+    (!!usage && !!limit && usage[i] >= limit[i]) ||
+    (!!readUsage && !!readLimit && readUsage[i] >= readLimit[i]);
+
+  return {
+    fifteenMinExceeded: exceeded(0),
+    dailyExceeded: exceeded(1),
+    usage,
+    limit,
+    readUsage,
+    readLimit,
+  };
+}
+
 async function request(endpoint, token) {
   const res = await fetch(`${STRAVA_API}${endpoint}`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -13,6 +49,9 @@ async function request(endpoint, token) {
   if (!res.ok) {
     const error = new Error(`Strava API error: ${res.status}`);
     error.status = res.status;
+    if (res.status === 429) {
+      error.rateLimit = parseRateLimit(res.headers);
+    }
     throw error;
   }
 
