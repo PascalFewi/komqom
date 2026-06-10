@@ -4,6 +4,10 @@ Explore Strava cycling segments on an interactive map. Segments are sorted by a 
 
 Inspired by [stravanity](https://github.com/emilebres/stravanity) for understanding the Strava API request structure.
 
+> [!NOTE]
+> This project relies on Strava's `/segments/explore` endpoint to discover segments within a map view. As of June 2026, Strava announced a significant overhaul of its developer program ([communityhub.strava.com](https://communityhub.strava.com/insider-journal-9/an-update-to-our-developer-program-13428)).
+
+
 ---
 
 ## How difficulty is calculated
